@@ -11,18 +11,18 @@
 
 **Purpose**: Monorepo初期化と共通開発基盤の整備、テスト基盤の確立
 
-- [ ] T001 Create npm workspaces monorepo configuration in package.json
-- [ ] T002 Create root scripts and workspace task runner config in package.json
-- [ ] T003 [P] Initialize frontend Vite React TypeScript app skeleton in apps/web/package.json
-- [ ] T004 [P] Initialize backend Fastify TypeScript app skeleton in apps/api/package.json
-- [ ] T005 [P] Add shared TypeScript base config in tsconfig.base.json
-- [ ] T006 [P] Add ESLint and Prettier base configuration in eslint.config.js
-- [ ] T007 [P] Add environment variable templates for web and api in .env.example
-- [ ] T008 [P] Setup test infrastructure: configure Vitest in apps/api/vitest.config.ts with unit and integration test paths
-- [ ] T009 [P] Setup frontend test infrastructure: configure Vitest + React Testing Library in apps/web/vitest.config.ts
-- [ ] T010 [P] Configure E2E test infrastructure: setup Playwright in tests/e2e with browser config and fixture patterns
-- [ ] T011 [P] Setup Dependabot vulnerability scanning and license audit in .github/dependabot.yml
-- [ ] T012 Create root scripts for test execution: npm run test:unit, test:integration, test:e2e, test:all in package.json
+- [X] T001 Create npm workspaces monorepo configuration in package.json
+- [X] T002 Create root scripts and workspace task runner config in package.json
+- [X] T003 [P] Initialize frontend Vite React TypeScript app skeleton in apps/web/package.json
+- [X] T004 [P] Initialize backend Fastify TypeScript app skeleton in apps/api/package.json
+- [X] T005 [P] Add shared TypeScript base config in tsconfig.base.json
+- [X] T006 [P] Add ESLint and Prettier base configuration in eslint.config.js
+- [X] T007 [P] Add environment variable templates for web and api in .env.example
+- [X] T008 [P] Setup test infrastructure: configure Vitest in apps/api/vitest.config.ts with unit and integration test paths
+- [X] T009 [P] Setup frontend test infrastructure: configure Vitest + React Testing Library in apps/web/vitest.config.ts
+- [X] T010 [P] Configure E2E test infrastructure: setup Playwright in tests/e2e with browser config and fixture patterns
+- [X] T011 [P] Setup Dependabot vulnerability scanning and license audit in .github/dependabot.yml
+- [X] T012 Create root scripts for test execution: npm run test:unit, test:integration, test:e2e, test:all in package.json
 
 ---
 
@@ -32,17 +32,17 @@
 
 **⚠️ CRITICAL**: このフェーズ完了までUS1-US3の作業を開始しない
 
-- [ ] T013 Setup SQLite connection and Drizzle client bootstrap in apps/api/src/db/client.ts
-- [ ] T014 Define foundational database schema for notes, items, metadata, and export snapshots in apps/api/src/db/schema.ts
-- [ ] T015 Create initial Drizzle migration for foundational schema in apps/api/src/db/migrations/0001_initial.sql
-- [ ] T016 [P] Implement API server bootstrap with Fastify plugins in apps/api/src/server.ts
-- [ ] T017 [P] Implement global error handler and request logging middleware in apps/api/src/middleware/error-handler.ts
-- [ ] T018 [P] Implement runtime env validation with zod in apps/api/src/config/env.ts
-- [ ] T019 [P] Create shared domain and DTO types in packages/shared-types/src/outliner.ts
-- [ ] T020 [P] Configure Tailwind CSS and design tokens in apps/web/src/styles/tokens.css
-- [ ] T021 [P] Create API client and base query utilities in apps/web/src/lib/api-client.ts
-- [ ] T022 [P] Setup unit tests for schema validation and migration integrity in apps/api/tests/unit/db-schema.test.ts
-- [ ] T023 [P] Setup integration tests for Fastify server startup and middleware stack in apps/api/tests/integration/server-bootstrap.test.ts
+- [X] T013 Setup SQLite connection and Drizzle client bootstrap in apps/api/src/db/client.ts
+- [X] T014 Define foundational database schema for notes, items, metadata, and export snapshots in apps/api/src/db/schema.ts
+- [X] T015 Create initial Drizzle migration for foundational schema in apps/api/src/db/migrations/0001_initial.sql
+- [X] T016 [P] Implement API server bootstrap with Fastify plugins in apps/api/src/server.ts
+- [X] T017 [P] Implement global error handler and request logging middleware in apps/api/src/middleware/error-handler.ts
+- [X] T018 [P] Implement runtime env validation with zod in apps/api/src/config/env.ts
+- [X] T019 [P] Create shared domain and DTO types in packages/shared-types/src/outliner.ts
+- [X] T020 [P] Configure Tailwind CSS and design tokens in apps/web/src/styles/tokens.css
+- [X] T021 [P] Create API client and base query utilities in apps/web/src/lib/api-client.ts
+- [X] T022 [P] Setup unit tests for schema validation and migration integrity in apps/api/tests/unit/db-schema.test.ts
+- [X] T023 [P] Setup integration tests for Fastify server startup and middleware stack in apps/api/tests/integration/server-bootstrap.test.ts
 
 **Checkpoint**: Foundation ready - user story implementation can begin
 
@@ -56,29 +56,29 @@
 
 ### Tests for User Story 1 🚨 WRITE TESTS FIRST
 
-- [ ] T024 [P] [US1] Write unit tests for note-repository CRUD methods (expectations only, no implementation) in apps/api/tests/unit/repositories/note-repository.test.ts
-- [ ] T025 [P] [US1] Write unit tests for item-repository tree move transaction logic in apps/api/tests/unit/repositories/item-repository.test.ts
-- [ ] T026 [P] [US1] Write unit tests for note-service optimistic locking and version conflicts in apps/api/tests/unit/services/note-service.test.ts
-- [ ] T027 [P] [US1] Write unit tests for item-service create/delete/reorder/indent operations in apps/api/tests/unit/services/item-service.test.ts
-- [ ] T028 [US1] Write integration test for note creation to persistence workflow in apps/api/tests/integration/note-workflow.test.ts
-- [ ] T029 [US1] Write integration test for item tree move and collapse state persistence in apps/api/tests/integration/item-tree-workflow.test.ts
-- [ ] T030 [P] [US1] Write component tests for outline-tree rendering and editing interactions in apps/web/tests/components/outline-tree.test.tsx
-- [ ] T031 [P] [US1] Write component tests for note-workspace keyboard navigation and item focus in apps/web/tests/components/note-workspace.test.tsx
-- [ ] T032 [US1] Write integration test for autosave debounce and conflict resolution flow in apps/web/tests/integration/autosave.test.ts
-- [ ] T033 [US1] Write E2E test for US1 independent test scenario (10+ items, reorder, collapse, reload state) in tests/e2e/us1-capture-structure.spec.ts
+- [X] T024 [P] [US1] Write unit tests for note-repository CRUD methods (expectations only, no implementation) in apps/api/tests/unit/repositories/note-repository.test.ts
+- [X] T025 [P] [US1] Write unit tests for item-repository tree move transaction logic in apps/api/tests/unit/repositories/item-repository.test.ts
+- [X] T026 [P] [US1] Write unit tests for note-service optimistic locking and version conflicts in apps/api/tests/unit/services/note-service.test.ts
+- [X] T027 [P] [US1] Write unit tests for item-service create/delete/reorder/indent operations in apps/api/tests/unit/services/item-service.test.ts
+- [X] T028 [US1] Write integration test for note creation to persistence workflow in apps/api/tests/integration/note-workflow.test.ts
+- [X] T029 [US1] Write integration test for item tree move and collapse state persistence in apps/api/tests/integration/item-tree-workflow.test.ts
+- [X] T030 [P] [US1] Write component tests for outline-tree rendering and editing interactions in apps/web/tests/components/outline-tree.test.tsx
+- [X] T031 [P] [US1] Write component tests for note-workspace keyboard navigation and item focus in apps/web/tests/components/note-workspace.test.tsx
+- [X] T032 [US1] Write integration test for autosave debounce and conflict resolution flow in apps/web/tests/integration/autosave.test.ts
+- [X] T033 [US1] Write E2E test for US1 independent test scenario (10+ items, reorder, collapse, reload state) in tests/e2e/us1-capture-structure.spec.ts
 
 ### Implementation for User Story 1
 
-- [ ] T034 [P] [US1] Implement note repository CRUD methods in apps/api/src/repositories/note-repository.ts (make T024 tests pass)
-- [ ] T035 [P] [US1] Implement outline item repository and tree move transaction in apps/api/src/repositories/item-repository.ts (make T025 tests pass)
-- [ ] T036 [US1] Implement note service with optimistic locking for autosave in apps/api/src/services/note-service.ts (make T026 tests pass)
-- [ ] T037 [US1] Implement item service for create update delete reorder indent logic in apps/api/src/services/item-service.ts (make T027 tests pass)
-- [ ] T038 [US1] Implement notes and items routes from contract in apps/api/src/routes/notes-routes.ts (verify T028 passes)
-- [ ] T039 [US1] Implement item move and collapse routes in apps/api/src/routes/items-routes.ts (verify T029 passes)
-- [ ] T040 [P] [US1] Build core outline editor tree component in apps/web/src/features/outliner/components/outline-tree.tsx (make T030 tests pass)
-- [ ] T041 [P] [US1] Build note workspace page and keyboard input flow in apps/web/src/pages/note-workspace.tsx (make T031 tests pass)
-- [ ] T042 [US1] Implement autosave hook with debounce and conflict feedback in apps/web/src/features/outliner/hooks/use-autosave.ts (make T032 tests pass)
-- [ ] T043 [US1] Implement undo redo state history manager in apps/web/src/features/outliner/stores/history-store.ts (verify undo/redo in T033 e2e)
+- [X] T034 [P] [US1] Implement note repository CRUD methods in apps/api/src/repositories/note-repository.ts (make T024 tests pass)
+- [X] T035 [P] [US1] Implement outline item repository and tree move transaction in apps/api/src/repositories/item-repository.ts (make T025 tests pass)
+- [X] T036 [US1] Implement note service with optimistic locking for autosave in apps/api/src/services/note-service.ts (make T026 tests pass)
+- [X] T037 [US1] Implement item service for create update delete reorder indent logic in apps/api/src/services/item-service.ts (make T027 tests pass)
+- [X] T038 [US1] Implement notes and items routes from contract in apps/api/src/routes/notes-routes.ts (verify T028 passes)
+- [X] T039 [US1] Implement item move and collapse routes in apps/api/src/routes/items-routes.ts (verify T029 passes)
+- [X] T040 [P] [US1] Build core outline editor tree component in apps/web/src/features/outliner/components/outline-tree.tsx (make T030 tests pass)
+- [X] T041 [P] [US1] Build note workspace page and keyboard input flow in apps/web/src/pages/note-workspace.tsx (make T031 tests pass)
+- [X] T042 [US1] Implement autosave hook with debounce and conflict feedback in apps/web/src/features/outliner/hooks/use-autosave.ts (make T032 tests pass)
+- [X] T043 [US1] Implement undo redo state history manager in apps/web/src/features/outliner/stores/history-store.ts (verify undo/redo in T033 e2e)
 
 **Checkpoint**: User Story 1 is fully functional and independently testable
 
@@ -92,21 +92,21 @@
 
 ### Tests for User Story 2 🚨 WRITE TESTS FIRST
 
-- [ ] T044 [P] [US2] Write unit tests for search/filter query logic in apps/api/tests/unit/services/search-service.test.ts
-- [ ] T045 [P] [US2] Write unit tests for highlight state update and persistence in apps/api/tests/unit/repositories/item-visual-state-repository.test.ts
-- [ ] T046 [US2] Write integration test for search endpoint with large outline (100+ items) in apps/api/tests/integration/search-performance.test.ts
-- [ ] T047 [P] [US2] Write component tests for search-panel result navigation and highlighting in apps/web/tests/components/search-panel.test.tsx
-- [ ] T048 [P] [US2] Write component tests for focus-toolbar and highlight state toggling in apps/web/tests/components/focus-toolbar.test.tsx
-- [ ] T049 [US2] Write E2E test for US2 independent test scenario (search 100-item outline, navigate results, persist highlight) in tests/e2e/us2-focused-review.spec.ts
+- [X] T044 [P] [US2] Write unit tests for search/filter query logic in apps/api/tests/unit/services/search-service.test.ts
+- [X] T045 [P] [US2] Write unit tests for highlight state update and persistence in apps/api/tests/unit/repositories/item-visual-state-repository.test.ts
+- [X] T046 [US2] Write integration test for search endpoint with large outline (100+ items) in apps/api/tests/integration/search-performance.test.ts
+- [X] T047 [P] [US2] Write component tests for search-panel result navigation and highlighting in apps/web/tests/components/search-panel.test.tsx
+- [X] T048 [P] [US2] Write component tests for focus-toolbar and highlight state toggling in apps/web/tests/components/focus-toolbar.test.tsx
+- [X] T049 [US2] Write E2E test for US2 independent test scenario (search 100-item outline, navigate results, persist highlight) in tests/e2e/us2-focused-review.spec.ts
 
 ### Implementation for User Story 2
 
-- [ ] T050 [P] [US2] Implement search and filter API endpoint for notes in apps/api/src/routes/search-routes.ts (make T044 tests pass)
-- [ ] T051 [P] [US2] Implement highlight update use case in item service in apps/api/src/services/item-highlight-service.ts (make T045 tests pass)
-- [ ] T052 [US2] Persist highlight and focus display properties in item repository in apps/api/src/repositories/item-visual-state-repository.ts (verify T046 passes)
-- [ ] T053 [P] [US2] Build search panel with result navigation in apps/web/src/features/search/components/search-panel.tsx (make T047 tests pass)
-- [ ] T054 [P] [US2] Build highlight and focus toolbar UI in apps/web/src/features/outliner/components/focus-toolbar.tsx (make T048 tests pass)
-- [ ] T055 [US2] Integrate search highlight focus state into outline tree rendering in apps/web/src/features/outliner/components/outline-tree.tsx (verify T049 e2e passes)
+- [X] T050 [P] [US2] Implement search and filter API endpoint for notes in apps/api/src/routes/search-routes.ts (make T044 tests pass)
+- [X] T051 [P] [US2] Implement highlight update use case in item service in apps/api/src/services/item-highlight-service.ts (make T045 tests pass)
+- [X] T052 [US2] Persist highlight and focus display properties in item repository in apps/api/src/repositories/item-visual-state-repository.ts (verify T046 passes)
+- [X] T053 [P] [US2] Build search panel with result navigation in apps/web/src/features/search/components/search-panel.tsx (make T047 tests pass)
+- [X] T054 [P] [US2] Build highlight and focus toolbar UI in apps/web/src/features/outliner/components/focus-toolbar.tsx (make T048 tests pass)
+- [X] T055 [US2] Integrate search highlight focus state into outline tree rendering in apps/web/src/features/outliner/components/outline-tree.tsx (verify T049 e2e passes)
 
 **Checkpoint**: User Stories 1 and 2 work independently
 
@@ -120,24 +120,24 @@
 
 ### Tests for User Story 3 🚨 WRITE TESTS FIRST
 
-- [ ] T056 [P] [US3] Write unit tests for metadata-repository upsert and validation rules in apps/api/tests/unit/repositories/metadata-repository.test.ts
-- [ ] T057 [P] [US3] Write unit tests for export-service json/markdown payload generation and checksum validation in apps/api/tests/unit/services/export-service.test.ts
-- [ ] T058 [P] [US3] Write unit tests for metadata schemas with purpose/category/tags/contextNote constraints in apps/api/tests/unit/schemas/metadata-schema.test.ts
-- [ ] T059 [US3] Write integration test for metadata upsert to persistence and export with metadata in apps/api/tests/integration/metadata-export-workflow.test.ts
-- [ ] T060 [P] [US3] Write component tests for metadata-panel editing and validation in apps/web/tests/components/metadata-panel.test.tsx
-- [ ] T061 [P] [US3] Write component tests for export-dialog format selection and payload download in apps/web/tests/components/export-dialog.test.tsx
-- [ ] T062 [US3] Write E2E test for US3 independent test scenario (add metadata, export json, verify structure and metadata) in tests/e2e/us3-ai-ready-metadata.spec.ts
+- [X] T056 [P] [US3] Write unit tests for metadata-repository upsert and validation rules in apps/api/tests/unit/repositories/metadata-repository.test.ts
+- [X] T057 [P] [US3] Write unit tests for export-service json/markdown payload generation and checksum validation in apps/api/tests/unit/services/export-service.test.ts
+- [X] T058 [P] [US3] Write unit tests for metadata schemas with purpose/category/tags/contextNote constraints in apps/api/tests/unit/schemas/metadata-schema.test.ts
+- [X] T059 [US3] Write integration test for metadata upsert to persistence and export with metadata in apps/api/tests/integration/metadata-export-workflow.test.ts
+- [X] T060 [P] [US3] Write component tests for metadata-panel editing and validation in apps/web/tests/components/metadata-panel.test.tsx
+- [X] T061 [P] [US3] Write component tests for export-dialog format selection and payload download in apps/web/tests/components/export-dialog.test.tsx
+- [X] T062 [US3] Write E2E test for US3 independent test scenario (add metadata, export json, verify structure and metadata) in tests/e2e/us3-ai-ready-metadata.spec.ts
 
 ### Implementation for User Story 3
 
-- [ ] T063 [P] [US3] Implement metadata repository upsert and validation rules in apps/api/src/repositories/metadata-repository.ts (make T056 tests pass)
-- [ ] T064 [P] [US3] Implement export service with json markdown payload generation in apps/api/src/services/export-service.ts (make T057 tests pass)
-- [ ] T065 [P] [US3] Create metadata validation schemas in apps/api/src/schemas/metadata-schema.ts (make T058 tests pass)
-- [ ] T066 [US3] Implement metadata service for purpose category tags contextNote in apps/api/src/services/metadata-service.ts (verify T059 passes)
-- [ ] T067 [US3] Implement metadata and export contract routes in apps/api/src/routes/metadata-export-routes.ts (verify T059 passes)
-- [ ] T068 [P] [US3] Build metadata editor panel in apps/web/src/features/metadata/components/metadata-panel.tsx (make T060 tests pass)
-- [ ] T069 [US3] Build export action UI and payload download flow in apps/web/src/features/export/components/export-dialog.tsx (make T061 tests pass)
-- [ ] T070 [US3] Integrate metadata state and export action into note workspace in apps/web/src/pages/note-workspace.tsx (verify T062 e2e passes)
+- [X] T063 [P] [US3] Implement metadata repository upsert and validation rules in apps/api/src/repositories/metadata-repository.ts (make T056 tests pass)
+- [X] T064 [P] [US3] Implement export service with json markdown payload generation in apps/api/src/services/export-service.ts (make T057 tests pass)
+- [X] T065 [P] [US3] Create metadata validation schemas in apps/api/src/schemas/metadata-schema.ts (make T058 tests pass)
+- [X] T066 [US3] Implement metadata service for purpose category tags contextNote in apps/api/src/services/metadata-service.ts (verify T059 passes)
+- [X] T067 [US3] Implement metadata and export contract routes in apps/api/src/routes/metadata-export-routes.ts (verify T059 passes)
+- [X] T068 [P] [US3] Build metadata editor panel in apps/web/src/features/metadata/components/metadata-panel.tsx (make T060 tests pass)
+- [X] T069 [US3] Build export action UI and payload download flow in apps/web/src/features/export/components/export-dialog.tsx (make T061 tests pass)
+- [X] T070 [US3] Integrate metadata state and export action into note workspace in apps/web/src/pages/note-workspace.tsx (verify T062 e2e passes)
 
 **Checkpoint**: All user stories are independently functional
 
@@ -147,15 +147,15 @@
 
 **Purpose**: 全体品質、運用性、パフォーマンス検証、リリース準備
 
-- [ ] T071 [P] Document architecture decision records for stack and persistence choices in docs/decisions/001-outliner-architecture.md
-- [ ] T072 [P] Add production-oriented logging redaction and log field policy in apps/api/src/middleware/logging-policy.ts
-- [ ] T073 Setup performance baseline testing with Playwright: 100-item outline p95 UI response time (target: ≤200ms) in tests/e2e/performance-baselines.spec.ts
-- [ ] T074 Setup API performance testing: measure p95 response times for major endpoints (target: ≤500ms) in apps/api/tests/performance/api-profiles.test.ts
-- [ ] T075 Improve performance hotspots for large outline rendering in apps/web/src/features/outliner/components/outline-tree.tsx (based on T073 results)
-- [ ] T076 [P] Update developer runbook and commands in README.md
-- [ ] T077 Validate quickstart flow and align command list in specs/001-modern-ai-outliner/quickstart.md
-- [ ] T078 Run all tests and verify coverage meets baseline (target: >80%) in CI: npm run test:all
-- [ ] T079 Validate Constitution Principle compliance: code quality, testing, security, UX/performance, dependencies before merge
+- [X] T071 [P] Document architecture decision records for stack and persistence choices in docs/decisions/001-outliner-architecture.md
+- [X] T072 [P] Add production-oriented logging redaction and log field policy in apps/api/src/middleware/logging-policy.ts
+- [X] T073 Setup performance baseline testing with Playwright: 100-item outline p95 UI response time (target: ≤200ms) in tests/e2e/performance-baselines.spec.ts
+- [X] T074 Setup API performance testing: measure p95 response times for major endpoints (target: ≤500ms) in apps/api/tests/performance/api-profiles.test.ts
+- [X] T075 Improve performance hotspots for large outline rendering in apps/web/src/features/outliner/components/outline-tree.tsx (based on T073 results)
+- [X] T076 [P] Update developer runbook and commands in README.md
+- [X] T077 Validate quickstart flow and align command list in specs/001-modern-ai-outliner/quickstart.md
+- [X] T078 Run all tests and verify coverage meets baseline (target: >80%) in CI: npm run test:all
+- [X] T079 Validate Constitution Principle compliance: code quality, testing, security, UX/performance, dependencies before merge
 
 ---
 
