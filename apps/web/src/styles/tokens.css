@@ -1,0 +1,58 @@
+/* Design tokens for Modern Thinking Outliner */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Color scale */
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-2: #334155;
+  --color-border: #475569;
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+
+  /* Highlight colors */
+  --color-highlight-low: rgba(99, 102, 241, 0.15);
+  --color-highlight-medium: rgba(99, 102, 241, 0.3);
+  --color-highlight-high: rgba(99, 102, 241, 0.5);
+
+  /* Spacing */
+  --spacing-indent: 1.5rem;
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-base: 200ms ease;
+}
+
+/* Light mode override */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-2: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+}
