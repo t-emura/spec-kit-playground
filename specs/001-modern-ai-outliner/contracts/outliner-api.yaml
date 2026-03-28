@@ -1,0 +1,396 @@
+openapi: 3.1.0
+info:
+  title: Modern Thinking Outliner API
+  version: 0.1.0
+  description: API contract for note, outline, metadata, and export operations.
+servers:
+  - url: http://localhost:8787
+paths:
+  /v1/notes:
+    get:
+      summary: List notes
+      responses:
+        '200':
+          description: Note list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkspaceNote'
+    post:
+      summary: Create note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                description:
+                  type: string
+                  maxLength: 500
+      responses:
+        '201':
+          description: Note created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceNote'
+  /v1/notes/{noteId}:
+    patch:
+      summary: Update note metadata
+      parameters:
+        - $ref: '#/components/parameters/NoteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                description:
+                  type: string
+                  maxLength: 500
+                viewMode:
+                  type: string
+                  enum: [tree, focus]
+                version:
+                  type: integer
+      responses:
+        '200':
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceNote'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+    delete:
+      summary: Delete note
+      parameters:
+        - $ref: '#/components/parameters/NoteId'
+      responses:
+        '204':
+          description: Deleted
+  /v1/notes/{noteId}/items:
+    get:
+      summary: Get full item tree of a note
+      parameters:
+        - $ref: '#/components/parameters/NoteId'
+      responses:
+        '200':
+          description: Item tree
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OutlineItem'
+    post:
+      summary: Create outline item
+      parameters:
+        - $ref: '#/components/parameters/NoteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, orderIndex, depth]
+              properties:
+                parentId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                orderIndex:
+                  type: integer
+                depth:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutlineItem'
+  /v1/items/{itemId}:
+    patch:
+      summary: Update item content or visual state
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                isCollapsed:
+                  type: boolean
+                highlightLevel:
+                  type: string
+                  enum: [none, low, medium, high]
+                status:
+                  type: string
+                  enum: [active, done, blocked]
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutlineItem'
+    delete:
+      summary: Delete item and descendants
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '204':
+          description: Deleted
+  /v1/items/{itemId}/move:
+    post:
+      summary: Move item in tree (re-parent and reorder)
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetOrderIndex]
+              properties:
+                targetParentId:
+                  type: string
+                  format: uuid
+                  nullable: true
+                targetOrderIndex:
+                  type: integer
+      responses:
+        '200':
+          description: Move completed
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /v1/items/{itemId}/metadata:
+    put:
+      summary: Upsert AI-ready metadata
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemMetadata'
+      responses:
+        '200':
+          description: Metadata upserted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemMetadata'
+  /v1/notes/{noteId}/export:
+    post:
+      summary: Export note
+      parameters:
+        - $ref: '#/components/parameters/NoteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [format, includeMetadata]
+              properties:
+                format:
+                  type: string
+                  enum: [json, markdown]
+                includeMetadata:
+                  type: boolean
+      responses:
+        '200':
+          description: Export data
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [snapshot, payload]
+                properties:
+                  snapshot:
+                    $ref: '#/components/schemas/ExportSnapshot'
+                  payload:
+                    type: string
+components:
+  parameters:
+    NoteId:
+      in: path
+      name: noteId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ItemId:
+      in: path
+      name: itemId
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    ConflictError:
+      description: Version conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    WorkspaceNote:
+      type: object
+      required: [id, title, viewMode, version, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        viewMode:
+          type: string
+          enum: [tree, focus]
+        version:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OutlineItem:
+      type: object
+      required: [id, noteId, orderIndex, depth, content, isCollapsed, highlightLevel, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        noteId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        orderIndex:
+          type: integer
+        depth:
+          type: integer
+          minimum: 0
+          maximum: 10
+        content:
+          type: string
+        isCollapsed:
+          type: boolean
+        highlightLevel:
+          type: string
+          enum: [none, low, medium, high]
+        status:
+          type: string
+          enum: [active, done, blocked]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ItemMetadata:
+      type: object
+      required: [purpose, tags]
+      properties:
+        purpose:
+          type: string
+          enum: [idea, task, question, decision, reference]
+        category:
+          type: string
+          maxLength: 60
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            minLength: 1
+            maxLength: 24
+        contextNote:
+          type: string
+          maxLength: 2000
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+    ExportSnapshot:
+      type: object
+      required: [id, noteId, format, includeMetadata, checksum, payloadSizeBytes, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        noteId:
+          type: string
+          format: uuid
+        format:
+          type: string
+          enum: [json, markdown]
+        includeMetadata:
+          type: boolean
+        checksum:
+          type: string
+        payloadSizeBytes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
