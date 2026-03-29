@@ -22,11 +22,10 @@ test.describe('Electron App Smoke Test', () => {
       ],
     });
 
-    // (a) BrowserWindow opens
-    const windows = app.windows();
-    expect(windows.length).toBeGreaterThanOrEqual(1);
+    // (a) BrowserWindow opens — wait for first window before querying
     const page = await app.firstWindow();
     await page.waitForLoadState('domcontentloaded');
+    expect(app.windows().length).toBeGreaterThanOrEqual(1);
 
     // (b) window.electron.apiBase is set in http://127.0.0.1:{port} format
     const apiBase = await page.evaluate(() => (window as any).electron?.apiBase as string);
