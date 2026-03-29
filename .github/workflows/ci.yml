@@ -108,7 +108,7 @@ jobs:
   e2e-electron:
     name: e2e-electron
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: [unit-tests, integration-tests]
     steps:
       - uses: actions/checkout@v4
@@ -124,6 +124,9 @@ jobs:
 
       - name: Install Xvfb for Electron
         run: sudo apt-get install -y xvfb
+
+      - name: Build app (web + api + electron)
+        run: npm run build
 
       - name: Rebuild native modules for Electron ABI
         run: npm run rebuild:native

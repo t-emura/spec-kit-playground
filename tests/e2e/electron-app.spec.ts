@@ -4,11 +4,16 @@ import { execSync } from 'child_process';
 import { join } from 'path';
 
 const REPO_ROOT = join(__dirname, '../..');
+const IS_CI = !!process.env['CI'];
 
 test.describe('Electron App Smoke Test', () => {
-  test.beforeAll(() => {
-    // Ensure the app is built before launching (can take ~60s in CI)
-    execSync('npm run build', { cwd: REPO_ROOT, stdio: 'inherit', timeout: 120_000 });
+  test.beforeAll(async () => {
+    // In CI the build is done as a workflow step before this test runs.
+    // Locally we build here so the test is self-contained.
+    if (!IS_CI) {
+      test.setTimeout(180_000); // allow up to 3 min for local build
+      execSync('npm run build', { cwd: REPO_ROOT, stdio: 'inherit', timeout: 150_000 });
+    }
   });
 
   test('app launches, exposes apiBase, and API responds (SC-002)', async () => {
@@ -17,16 +22,28 @@ test.describe('Electron App Smoke Test', () => {
 
     const startTime = Date.now();
 
+    const stderrLines: string[] = [];
     const app = await electron.launch({
       args: [
         REPO_ROOT,
         '--no-sandbox',
         '--disable-setuid-sandbox',
       ],
+      env: {
+        ...process.env,
+        // Tell startup-checks to skip blocking dialogs in CI/test environments
+        ELECTRON_NO_DIALOG: '1',
+      },
     });
 
+    // Capture Electron stderr for diagnostics on failure
+    app.process().stderr?.on('data', (d: Buffer) => stderrLines.push(d.toString()));
+
     // (a) BrowserWindow opens — wait for first window before querying
-    const page = await app.firstWindow({ timeout: 90_000 });
+    const page = await app.firstWindow({ timeout: 90_000 }).catch((err) => {
+      console.error('[e2e] firstWindow failed. Electron stderr:', stderrLines.join(''));
+      throw err;
+    });
     await page.waitForLoadState('domcontentloaded');
     expect(app.windows().length).toBeGreaterThanOrEqual(1);
 
@@ -44,7 +61,7 @@ test.describe('Electron App Smoke Test', () => {
     expect(response.status).toBe(200);
 
     // (d) SC-002: startup to apiBase available < 30s (on real hardware; skip in CI)
-    if (!process.env['CI']) {
+    if (!IS_CI) {
       expect(elapsedMs).toBeLessThan(30_000);
     }
 
