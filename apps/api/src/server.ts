@@ -1,6 +1,9 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
+import fastifyStatic from '@fastify/static';
+import { resolve } from 'path';
+import { existsSync } from 'fs';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notesRoutes } from './routes/notes-routes.js';
@@ -29,6 +32,23 @@ export function buildServer() {
   server.register(metadataExportRoutes, { prefix: '/v1' });
 
   server.get('/health', async () => ({ status: 'ok' }));
+
+  // Register static file serving only when STATIC_DIR exists (set by Electron main process)
+  if (existsSync(resolve(env.STATIC_DIR))) {
+    server.register(fastifyStatic, {
+      root: resolve(env.STATIC_DIR),
+      prefix: '/',
+      wildcard: false,
+    });
+    // SPA fallback: serve index.html for non-API routes
+    server.setNotFoundHandler((req, reply) => {
+      if (req.url.startsWith('/v1/')) {
+        void reply.status(404).send({ message: 'Not Found' });
+        return;
+      }
+      void reply.sendFile('index.html');
+    });
+  }
 
   return server;
 }

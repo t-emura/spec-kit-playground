@@ -15,7 +15,7 @@ import type {
   SearchResult,
 } from 'shared-types';
 
-const BASE_URL = import.meta.env['VITE_API_BASE_URL'] ?? 'http://localhost:8787';
+const BASE_URL = (window as any).electron?.apiBase ?? import.meta.env['VITE_API_BASE_URL'] ?? 'http://localhost:8787';
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const hasBody = options?.body != null;

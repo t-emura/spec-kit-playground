@@ -23,7 +23,8 @@
     "fastify": "^4.28.0",
     "pino": "^9.0.0",
     "uuid": "^9.0.0",
-    "zod": "^3.22.0"
+    "zod": "^3.22.0",
+    "@fastify/static": "^7"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",

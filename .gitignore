@@ -24,3 +24,8 @@ test-results/
 apps/api/tsconfig.tsbuildinfo
 apps/api/tsconfig.tsbuildinfo
 apps/web/tsconfig.tsbuildinfo
+
+# Electron build output
+/public
+/dist-electron
+apps/electron/dist/
