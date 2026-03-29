@@ -6,3 +6,4 @@ uv tool install specify-cli --from "git+https://github.com/github/spec-kit.git@$
 
 npm install
 npx playwright install --with-deps chromium
+npm run db:migrate

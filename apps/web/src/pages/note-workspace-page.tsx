@@ -21,15 +21,24 @@ export function NoteWorkspacePage() {
       .catch(() => setLoading(false));
   }, [noteId]);
 
-  if (loading) return <div>Loading…</div>;
-  if (!note) return <div>Note not found. <button onClick={() => navigate('/')}>Go home</button></div>;
+  if (loading) return <div className="text-sm text-text-muted p-6">Loading…</div>;
+  if (!note) return (
+    <div className="text-sm text-text-muted p-6">
+      Note not found.{' '}
+      <button onClick={() => navigate('/')} className="btn-ghost">Go home</button>
+    </div>
+  );
 
   return (
-    <div>
-      <nav>
-        <button onClick={() => navigate('/')} aria-label="Back to notes">← Notes</button>
+    <div className="flex flex-col h-screen bg-bg">
+      <nav className="flex items-center px-4 py-2 border-b border-border bg-surface">
+        <button onClick={() => navigate('/')} aria-label="Back to notes" className="btn-ghost text-sm">
+          ← Notes
+        </button>
       </nav>
-      <NoteWorkspace noteId={note.id} noteTitle={note.title} noteVersion={note.version} />
+      <div className="flex-1 overflow-hidden">
+        <NoteWorkspace noteId={note.id} noteTitle={note.title} noteVersion={note.version} />
+      </div>
     </div>
   );
 }

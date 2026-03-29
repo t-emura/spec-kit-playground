@@ -22,10 +22,32 @@
   --color-highlight-medium: rgba(99, 102, 241, 0.3);
   --color-highlight-high: rgba(99, 102, 241, 0.5);
 
-  /* Spacing */
-  --spacing-indent: 1.5rem;
+  /* Highlight strip colors (left-border on outline items) */
+  --color-highlight-strip-none: var(--color-border);
+  --color-highlight-strip-low: var(--color-primary);
+  --color-highlight-strip-medium: var(--color-primary-hover);
+  --color-highlight-strip-high: #a5b4fc;
 
-  /* Typography */
+  /* Spacing scale */
+  --spacing-indent: 1.5rem;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-10: 40px;
+
+  /* Typography scale */
+  --text-size-heading: 1.25rem;
+  --text-size-subheading: 1rem;
+  --text-size-body: 0.875rem;
+  --text-size-caption: 0.75rem;
+  --text-weight-heading: 600;
+  --text-weight-subheading: 500;
+  --text-weight-body: 400;
+  --text-line-height: 1.6;
+
+  /* Font families */
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-sans: 'Inter', system-ui, sans-serif;
 
@@ -55,4 +77,22 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   margin: 0;
+}
+
+/* Outline item highlight strips */
+.outline-item { border-left-color: var(--color-highlight-strip-none); }
+.outline-item.highlight-low { border-left-color: var(--color-highlight-strip-low); }
+.outline-item.highlight-medium { border-left-color: var(--color-highlight-strip-medium); }
+.outline-item.highlight-high { border-left-color: var(--color-highlight-strip-high); }
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-md transition-colors disabled:opacity-50 cursor-pointer;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-3 py-1.5 border border-[color:var(--color-border)] text-[color:var(--color-text)] text-sm font-medium rounded-md hover:bg-[color:var(--color-surface-2)] transition-colors cursor-pointer;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-2 py-1 text-[color:var(--color-text-muted)] text-sm hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)] rounded-md transition-colors cursor-pointer;
+  }
 }

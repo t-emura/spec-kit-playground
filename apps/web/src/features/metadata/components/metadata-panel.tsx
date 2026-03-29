@@ -5,11 +5,12 @@ import type { ItemMetadata, MetadataPurpose } from 'shared-types';
 interface MetadataPanelProps {
   itemId: string;
   onMetadataChange: (meta: ItemMetadata) => void;
+  className?: string;
 }
 
 const PURPOSES: MetadataPurpose[] = ['idea', 'task', 'question', 'decision', 'reference'];
 
-export function MetadataPanel({ itemId, onMetadataChange }: MetadataPanelProps) {
+export function MetadataPanel({ itemId, onMetadataChange, className }: MetadataPanelProps) {
   const [loading, setLoading] = useState(true);
   const [purpose, setPurpose] = useState<MetadataPurpose>('idea');
   const [category, setCategory] = useState('');
@@ -62,39 +63,52 @@ export function MetadataPanel({ itemId, onMetadataChange }: MetadataPanelProps) 
     }
   };
 
-  if (loading) return <div data-testid="metadata-panel" className="metadata-panel">Loading…</div>;
+  const panelClass = `bg-surface border-t border-border md:border-t-0 md:border-l p-6 flex flex-col gap-5 overflow-y-auto${className ? ` ${className}` : ''}`;
+
+  if (loading) return <div data-testid="metadata-panel" className={panelClass}>Loading…</div>;
 
   return (
-    <div data-testid="metadata-panel" className="metadata-panel">
-      <h3>AI Context Metadata</h3>
+    <div data-testid="metadata-panel" className={panelClass}>
+      <h3 className="text-base font-semibold text-text">AI Context Metadata</h3>
 
-      <label htmlFor="purpose-select">Purpose</label>
-      <select
-        id="purpose-select"
-        data-testid="purpose-select"
-        value={purpose}
-        onChange={(e) => setPurpose(e.target.value as MetadataPurpose)}
-      >
-        {PURPOSES.map((p) => <option key={p} value={p}>{p}</option>)}
-      </select>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="purpose-select" className="text-xs font-medium text-text-muted uppercase tracking-wide">Purpose</label>
+        <select
+          id="purpose-select"
+          data-testid="purpose-select"
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value as MetadataPurpose)}
+          className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text focus:border-primary outline-none"
+        >
+          {PURPOSES.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
+      </div>
 
-      <label htmlFor="category-input">Category</label>
-      <input
-        id="category-input"
-        data-testid="category-input"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        maxLength={60}
-        placeholder="Category"
-      />
+      <div className="flex flex-col gap-1">
+        <label htmlFor="category-input" className="text-xs font-medium text-text-muted uppercase tracking-wide">Category</label>
+        <input
+          id="category-input"
+          data-testid="category-input"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          maxLength={60}
+          placeholder="Category"
+          className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary outline-none"
+        />
+      </div>
 
-      <div data-testid="tag-editor" className="tag-editor">
-        <label>Tags</label>
-        <div className="tag-list">
+      <div data-testid="tag-editor" className="tag-editor flex flex-col gap-1">
+        <label className="text-xs font-medium text-text-muted uppercase tracking-wide">Tags</label>
+        <div className="tag-list flex flex-wrap gap-1 mb-1">
           {tags.map((tag) => (
-            <span key={tag} className="tag">
+            <span key={tag} className="tag inline-flex items-center gap-1 px-2 py-0.5 bg-surface-2 border border-border rounded-full text-xs text-text">
               {tag}
-              <button type="button" onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`}>×</button>
+              <button
+                type="button"
+                onClick={() => removeTag(tag)}
+                aria-label={`Remove tag ${tag}`}
+                className="text-text-muted hover:text-danger transition-colors ml-0.5"
+              >×</button>
             </span>
           ))}
         </div>
@@ -105,34 +119,41 @@ export function MetadataPanel({ itemId, onMetadataChange }: MetadataPanelProps) 
           onKeyDown={handleTagKeyDown}
           placeholder="Add tag…"
           aria-label="Add tag"
+          className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary outline-none"
         />
       </div>
 
-      <label htmlFor="context-note-input">Context Note</label>
-      <textarea
-        id="context-note-input"
-        data-testid="context-note-input"
-        value={contextNote}
-        onChange={(e) => setContextNote(e.target.value)}
-        maxLength={2000}
-        rows={3}
-        placeholder="Context for AI…"
-      />
+      <div className="flex flex-col gap-1">
+        <label htmlFor="context-note-input" className="text-xs font-medium text-text-muted uppercase tracking-wide">Context Note</label>
+        <textarea
+          id="context-note-input"
+          data-testid="context-note-input"
+          value={contextNote}
+          onChange={(e) => setContextNote(e.target.value)}
+          maxLength={2000}
+          rows={3}
+          placeholder="Context for AI…"
+          className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-primary outline-none resize-none leading-relaxed"
+        />
+      </div>
 
-      <label htmlFor="confidence-input">Confidence (0-100)</label>
-      <input
-        id="confidence-input"
-        data-testid="confidence-input"
-        type="number"
-        min={0}
-        max={100}
-        value={confidence ?? ''}
-        onChange={(e) => setConfidence(e.target.value ? Number(e.target.value) : undefined)}
-      />
+      <div className="flex flex-col gap-1">
+        <label htmlFor="confidence-input" className="text-xs font-medium text-text-muted uppercase tracking-wide">Confidence (0–100)</label>
+        <input
+          id="confidence-input"
+          data-testid="confidence-input"
+          type="number"
+          min={0}
+          max={100}
+          value={confidence ?? ''}
+          onChange={(e) => setConfidence(e.target.value ? Number(e.target.value) : undefined)}
+          className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text focus:border-primary outline-none"
+        />
+      </div>
 
-      {error && <div className="error" role="alert">{error}</div>}
+      {error && <div className="error text-xs text-danger" role="alert">{error}</div>}
 
-      <button data-testid="metadata-save-btn" type="button" onClick={handleSave}>
+      <button data-testid="metadata-save-btn" type="button" onClick={handleSave} className="btn-primary w-full mt-1">
         Save Metadata
       </button>
     </div>

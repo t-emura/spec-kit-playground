@@ -88,7 +88,7 @@ export function OutlineTree({
   );
 
   return (
-    <div className="outline-tree" role="tree" aria-label="Outline editor">
+    <div className="outline-tree py-2" role="tree" aria-label="Outline editor">
       {visibleItems.map((item) => {
         const hasChildren = items.some((i) => i.parentId === item.id);
         const isMatched =
@@ -102,24 +102,24 @@ export function OutlineTree({
             data-depth={String(item.depth)}
             data-highlight={item.highlightLevel}
             role="treeitem"
-            className={`outline-item depth-${item.depth} highlight-${item.highlightLevel}${isMatched ? ' search-match' : ''}`}
-            style={{ paddingLeft: `calc(${item.depth} * var(--spacing-indent, 1.5rem))` }}
+            className={`outline-item group depth-${item.depth} highlight-${item.highlightLevel} flex items-center gap-2 py-1 border-l-4${isMatched ? ' search-match bg-[color:var(--color-highlight-low)]' : ''}`}
+            style={{ paddingLeft: `calc(${item.depth} * var(--spacing-indent, 1.5rem) + 0.75rem)` }}
           >
             {hasChildren && (
               <button
                 data-testid={`collapse-toggle-${item.id}`}
-                className="collapse-toggle"
+                className="collapse-toggle text-xs text-text-muted w-4 h-4 flex-shrink-0 flex items-center justify-center hover:text-text transition-colors"
                 aria-label={item.isCollapsed ? 'Expand' : 'Collapse'}
                 onClick={() => onCollapseToggle?.(item.id, !item.isCollapsed)}
               >
                 {item.isCollapsed ? '▶' : '▼'}
               </button>
             )}
-            {!hasChildren && <span className="collapse-spacer" />}
+            {!hasChildren && <span className="collapse-spacer w-4 flex-shrink-0" />}
 
             <input
               ref={(el) => { inputRefs.current[item.id] = el; }}
-              className="item-input"
+              className="item-input flex-1 bg-transparent border-none outline-none text-sm text-text caret-primary"
               type="text"
               role="textbox"
               aria-label={`Edit item: ${item.content}`}
@@ -131,16 +131,15 @@ export function OutlineTree({
               onChange={(e) => setEditingContent(e.target.value)}
               onBlur={() => handleBlur(item)}
               onKeyDownCapture={(e) => {
-                // Prevent Tab's default focus movement in capture phase
                 if (e.key === 'Tab') e.preventDefault();
               }}
               onKeyDown={(e) => handleKeyDown(e, item)}
             />
 
-            <div className="item-menu-wrapper">
+            <div className="item-menu-wrapper relative">
               <button
                 data-testid="item-menu-btn"
-                className="item-menu-btn"
+                className="item-menu-btn opacity-0 group-hover:opacity-100 text-text-muted px-1 hover:text-text transition-opacity"
                 aria-label="Item actions"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -150,10 +149,11 @@ export function OutlineTree({
                 ⋮
               </button>
               {menuOpenId === item.id && (
-                <div className="item-menu-popup" role="menu">
+                <div className="item-menu-popup absolute right-0 bg-surface-2 border border-border rounded-md shadow-lg py-1 z-10" role="menu">
                   <button
                     data-testid="open-metadata-btn"
                     role="menuitem"
+                    className="w-full text-left px-3 py-1.5 text-sm text-text hover:bg-surface transition-colors"
                     onClick={() => {
                       setMenuOpenId(null);
                       onOpenMetadata?.(item.id);
