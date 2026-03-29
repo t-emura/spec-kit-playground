@@ -14,7 +14,13 @@ test.describe('Electron App Smoke Test', () => {
   test('app launches, exposes apiBase, and API responds (SC-002)', async () => {
     const startTime = Date.now();
 
-    const app = await electron.launch({ args: [REPO_ROOT] });
+    const app = await electron.launch({
+      args: [
+        REPO_ROOT,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+      ],
+    });
 
     // (a) BrowserWindow opens
     const windows = app.windows();
