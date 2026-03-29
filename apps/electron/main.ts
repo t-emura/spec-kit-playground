@@ -30,11 +30,10 @@ app.whenReady().then(async () => {
 
   // Phase 4 (US2): set env vars for the API server
   process.env.STATIC_DIR = staticDir;
-  const dbPath = path.join(dataDir, 'outliner.db');
-  process.env.SQLITE_DB_PATH = dbPath;
 
-  // Run DB migrations with explicit path (env module caches values at import time)
-  runMigrations(dbPath);
+  // Run DB migrations using env.SQLITE_DB_PATH (same path buildServer() uses,
+  // since env is cached at import time and cannot be changed after loading)
+  runMigrations();
 
   server = buildServer();
   await server.listen({ port: 0, host: '127.0.0.1' });
