@@ -95,7 +95,7 @@ export class ItemService {
     if (!parent) notFound(item.parentId);
 
     const siblings = await this.itemRepo.findByNoteId(item.noteId);
-    const afterParent = siblings
+    const _afterParent = siblings
       .filter((s) => s.parentId === parent.parentId && s.orderIndex > parent.orderIndex)
       .map((s) => s.orderIndex);
     const newOrderIndex = parent.orderIndex + 1;

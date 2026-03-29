@@ -67,8 +67,8 @@ describe('ItemRepository', () => {
 
   it('moves an item to a new position in the same level', async () => {
     const item1 = await itemRepo.create(noteId, { content: 'A', orderIndex: 0, depth: 0 });
-    const item2 = await itemRepo.create(noteId, { content: 'B', orderIndex: 1, depth: 0 });
-    const item3 = await itemRepo.create(noteId, { content: 'C', orderIndex: 2, depth: 0 });
+    const _item2 = await itemRepo.create(noteId, { content: 'B', orderIndex: 1, depth: 0 });
+    const _item3 = await itemRepo.create(noteId, { content: 'C', orderIndex: 2, depth: 0 });
 
     // Move item1 to end
     await itemRepo.move(item1.id, { targetParentId: null, targetOrderIndex: 2 });
@@ -88,7 +88,7 @@ describe('ItemRepository', () => {
   it('reorders siblings when inserting between items', async () => {
     await itemRepo.create(noteId, { content: 'A', orderIndex: 0, depth: 0 });
     await itemRepo.create(noteId, { content: 'B', orderIndex: 1, depth: 0 });
-    const newItem = await itemRepo.create(noteId, { content: 'X', orderIndex: 1, depth: 0 });
+    const _newItem = await itemRepo.create(noteId, { content: 'X', orderIndex: 1, depth: 0 });
 
     const items = await itemRepo.findByNoteId(noteId);
     const sorted = items.sort((a, b) => a.orderIndex - b.orderIndex);

@@ -33,7 +33,7 @@ export function OutlineTree({
   focusItemId,
   onItemFocused,
   onItemChange,
-  onItemMove,
+  onItemMove: _onItemMove,
   onItemDelete,
   onItemCreate,
   onIndentItem,

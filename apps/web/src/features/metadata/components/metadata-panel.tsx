@@ -57,7 +57,7 @@ export function MetadataPanel({ itemId, onMetadataChange }: MetadataPanelProps) 
         confidence,
       });
       onMetadataChange(meta);
-    } catch (e) {
+    } catch {
       setError('Failed to save metadata');
     }
   };
