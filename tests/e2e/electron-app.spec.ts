@@ -48,6 +48,8 @@ test.describe('Electron App Smoke Test', () => {
     expect(app.windows().length).toBeGreaterThanOrEqual(1);
 
     // (b) window.electron.apiBase is set in http://127.0.0.1:{port} format
+    // preload init() is async (ipcRenderer.invoke), so wait for it to resolve
+    await page.waitForFunction(() => !!(window as any).electron?.apiBase, { timeout: 15_000 });
     const apiBase = await page.evaluate(() => (window as any).electron?.apiBase as string);
     expect(apiBase).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
 
