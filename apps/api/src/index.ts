@@ -3,6 +3,7 @@ import { env } from './config/env.js';
 import { runMigrations } from './db/migrate.js';
 
 export { buildServer };
+export { runMigrations };
 
 export async function startServer() {
   runMigrations();

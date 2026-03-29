@@ -5,11 +5,12 @@ import { checkStaticDir, checkDbWritable } from './startup-checks.js';
 
 // ESM: set ELECTRON flag before dynamic import to prevent API auto-start
 process.env.ELECTRON = 'true';
-const { buildServer } = await import('../api/src/index.js');
+const { buildServer, runMigrations } = await import('../api/src/index.js');
 
 import type { FastifyInstance } from 'fastify';
 
 let server: FastifyInstance;
+let isQuitting = false;
 
 app.whenReady().then(async () => {
   // Phase 4 (US2): configure paths based on packaged vs dev mode
@@ -27,9 +28,12 @@ app.whenReady().then(async () => {
   // Phase 5 (US3): DB write permission check
   if (!checkDbWritable(dataDir, { dialog, app })) return;
 
-  // Phase 4 (US2): set env vars before buildServer
+  // Phase 4 (US2): set env vars before migrations and buildServer
   process.env.STATIC_DIR = staticDir;
   process.env.SQLITE_DB_PATH = path.join(dataDir, 'outliner.db');
+
+  // Run DB migrations before starting the server
+  runMigrations();
 
   server = buildServer();
   await server.listen({ port: 0, host: '127.0.0.1' });
@@ -51,9 +55,11 @@ app.whenReady().then(async () => {
   win.loadURL(`http://127.0.0.1:${port}`);
 });
 
-// Phase 4 (US2): graceful shutdown
+// Phase 4 (US2): graceful shutdown — guard prevents re-entrant quit
 app.on('before-quit', async (event) => {
+  if (isQuitting) return;
   event.preventDefault();
+  isQuitting = true;
   if (server) {
     await server.close();
   }
