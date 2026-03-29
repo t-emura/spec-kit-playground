@@ -19,7 +19,13 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash .devcontainer/scripts/post-create.sh"
+	"postCreateCommand": "bash .devcontainer/scripts/post-create.sh",
+
+	"forwardPorts": [5173, 8787],
+	"portsAttributes": {
+		"5173": { "label": "Web App", "onAutoForward": "openBrowser" },
+		"8787": { "label": "API", "onAutoForward": "notify" }
+	}
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
