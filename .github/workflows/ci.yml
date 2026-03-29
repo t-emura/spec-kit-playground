@@ -95,7 +95,11 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
 
-      - run: npm run test:e2e
+      - name: Install Xvfb for Electron tests
+        run: sudo apt-get install -y xvfb
+
+      - name: Run e2e tests
+        run: xvfb-run --auto-servernum npm run test:e2e
 
       - uses: actions/upload-artifact@v4
         if: always()
