@@ -131,29 +131,30 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
   };
 
   if (loading) {
-    return <div data-testid="note-workspace" className="note-workspace loading">Loading…</div>;
+    return <div data-testid="note-workspace" className="note-workspace loading text-sm text-text-muted p-6">Loading…</div>;
   }
 
   return (
-    <div data-testid="note-workspace" data-note-id={noteId} className="note-workspace">
-      <header className="workspace-header">
+    <div data-testid="note-workspace" data-note-id={noteId} className="note-workspace flex flex-col h-full">
+      <header className="workspace-header flex items-center gap-3 px-6 py-3 border-b border-border bg-surface flex-shrink-0">
         <input
           data-testid="note-title-input"
-          className="note-title-input"
+          className="note-title-input flex-1 text-xl font-semibold bg-transparent border-none outline-none text-text placeholder:text-text-muted"
           value={title}
           onChange={handleTitleChange}
           placeholder="Note title"
           aria-label="Note title"
         />
-        <div className="workspace-actions">
-          <button onClick={handleUndo} disabled={!historyRef.current.canUndo()} aria-label="Undo">↩</button>
-          <button onClick={handleRedo} disabled={!historyRef.current.canRedo()} aria-label="Redo">↪</button>
+        <div className="workspace-actions flex items-center gap-2">
+          <button onClick={handleUndo} disabled={!historyRef.current.canUndo()} aria-label="Undo" className="btn-ghost px-2 py-1 text-lg">↩</button>
+          <button onClick={handleRedo} disabled={!historyRef.current.canRedo()} aria-label="Redo" className="btn-ghost px-2 py-1 text-lg">↪</button>
           <button
             data-testid="export-note-btn"
             onClick={() => setShowExport(true)}
             aria-label="Export note"
+            className="btn-secondary text-sm"
           >⬇ Export</button>
-          <span className="save-status" aria-live="polite">
+          <span className="save-status text-xs text-text-muted ml-2" aria-live="polite">
             {saveStatus === 'saving' && '●'}
             {saveStatus === 'saved' && '✓'}
             {saveStatus === 'conflict' && '⚠ Conflict'}
@@ -177,6 +178,7 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
         <MetadataPanel
           itemId={selectedItemId}
           onMetadataChange={() => setShowMetadata(false)}
+          className="fixed bottom-0 inset-x-0 rounded-t-2xl md:relative md:rounded-none md:inset-auto md:w-80"
         />
       )}
 
@@ -186,28 +188,30 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
         onClose={() => setShowExport(false)}
       />
 
-      {items.length === 0 ? (
-        <div data-testid="empty-outline-hint" className="empty-hint">
-          <button data-testid="add-first-item" onClick={() => handleItemCreate(null, 0, null)}>
-            + Add first item
-          </button>
-        </div>
-      ) : (
-        <OutlineTree
-          items={items}
-          focusItemId={focusItemId}
-          searchQuery={searchQuery}
-          onItemFocused={() => setFocusItemId(null)}
-          onItemChange={handleItemChange}
-          onItemMove={handleItemMove}
-          onItemDelete={handleItemDelete}
-          onItemCreate={handleItemCreate}
-          onIndentItem={handleItemIndent}
-          onOutdentItem={handleItemOutdent}
-          onCollapseToggle={handleCollapseToggle}
-          onOpenMetadata={handleOpenMetadata}
-        />
-      )}
+      <div className="flex-1 overflow-y-auto">
+        {items.length === 0 ? (
+          <div data-testid="empty-outline-hint" className="empty-hint flex items-center justify-center h-32 text-text-muted">
+            <button data-testid="add-first-item" onClick={() => handleItemCreate(null, 0, null)} className="btn-ghost text-sm">
+              + Add first item
+            </button>
+          </div>
+        ) : (
+          <OutlineTree
+            items={items}
+            focusItemId={focusItemId}
+            searchQuery={searchQuery}
+            onItemFocused={() => setFocusItemId(null)}
+            onItemChange={handleItemChange}
+            onItemMove={handleItemMove}
+            onItemDelete={handleItemDelete}
+            onItemCreate={handleItemCreate}
+            onIndentItem={handleItemIndent}
+            onOutdentItem={handleItemOutdent}
+            onCollapseToggle={handleCollapseToggle}
+            onOpenMetadata={handleOpenMetadata}
+          />
+        )}
+      </div>
     </div>
   );
 }

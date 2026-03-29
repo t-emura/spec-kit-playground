@@ -10,16 +10,22 @@ const HIGHLIGHT_LEVELS: HighlightLevel[] = ['none', 'low', 'medium', 'high'];
 const STATUSES: ItemStatus[] = ['active', 'done', 'blocked'];
 
 const HIGHLIGHT_COLORS: Record<HighlightLevel, string> = {
-  none: '#94a3b8',
-  low: '#6366f1',
-  medium: '#818cf8',
-  high: '#a5b4fc',
+  none: 'var(--color-text-muted)',
+  low: 'var(--color-primary)',
+  medium: 'var(--color-primary-hover)',
+  high: 'var(--color-highlight-strip-high)',
+};
+
+const STATUS_ACTIVE_CLASSES: Record<ItemStatus, string> = {
+  active: 'bg-primary text-white border-primary',
+  done: 'bg-success text-white border-success',
+  blocked: 'bg-danger text-white border-danger',
 };
 
 export function FocusToolbar({ item, onHighlightChange, onStatusChange }: FocusToolbarProps) {
   return (
-    <div className="focus-toolbar" role="toolbar" aria-label="Item focus controls">
-      <div className="highlight-controls" aria-label="Highlight level">
+    <div className="focus-toolbar flex items-center gap-4 px-4 py-2 border-t border-border bg-surface" role="toolbar" aria-label="Item focus controls">
+      <div className="highlight-controls flex items-center gap-1" aria-label="Highlight level">
         {HIGHLIGHT_LEVELS.map((level) => (
           <button
             key={level}
@@ -28,28 +34,33 @@ export function FocusToolbar({ item, onHighlightChange, onStatusChange }: FocusT
             aria-label={`Highlight ${level}`}
             title={`Highlight: ${level}`}
             onClick={() => onHighlightChange(item.id, level)}
+            className="w-4 h-4 rounded-full transition-opacity"
             style={{
               backgroundColor: HIGHLIGHT_COLORS[level],
-              opacity: item.highlightLevel === level ? 1 : 0.4,
+              opacity: item.highlightLevel === level ? 1 : 0.35,
             }}
-          >
-            {level === 'none' ? '○' : '●'}
-          </button>
+          />
         ))}
       </div>
 
-      <div className="status-controls" aria-label="Item status">
-        {STATUSES.map((status) => (
-          <button
-            key={status}
-            data-testid={`status-${status}`}
-            aria-pressed={item.status === status}
-            aria-label={`Set status: ${status}`}
-            onClick={() => onStatusChange?.(item.id, status)}
-          >
-            {status}
-          </button>
-        ))}
+      <div className="status-controls flex items-center gap-1 ml-4" aria-label="Item status">
+        {STATUSES.map((status) => {
+          const isActive = item.status === status;
+          return (
+            <button
+              key={status}
+              data-testid={`status-${status}`}
+              aria-pressed={isActive}
+              aria-label={`Set status: ${status}`}
+              onClick={() => onStatusChange?.(item.id, status)}
+              className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                isActive ? STATUS_ACTIVE_CLASSES[status] : 'border-border text-text-muted hover:border-text-muted'
+              }`}
+            >
+              {status}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
