@@ -41,7 +41,7 @@ app.whenReady().then(async () => {
   const address = server.server.address();
   const port = typeof address === 'object' && address ? address.port : 0;
 
-  ipcMain.handle('get-port', () => port);
+  ipcMain.on('get-port', (event) => { event.returnValue = port; });
 
   const win = new BrowserWindow({
     width: 1280,
