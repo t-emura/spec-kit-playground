@@ -28,6 +28,8 @@ test.describe('Electron App Smoke Test', () => {
         REPO_ROOT,
         '--no-sandbox',
         '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
       ],
       env: {
         ...process.env,
