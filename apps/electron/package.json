@@ -1,0 +1,12 @@
+{
+  "name": "electron-app",
+  "private": true,
+  "main": "dist/electron/main.js",
+  "type": "module",
+  "scripts": {
+    "test:unit": "vitest run --config vitest.config.ts tests/unit"
+  },
+  "devDependencies": {
+    "vitest": "^2"
+  }
+}

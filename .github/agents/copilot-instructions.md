@@ -7,6 +7,10 @@ Auto-generated from all feature plans. Last updated: 2026-03-29
 - N/A（ワークフロー設定ファイルのみ） (002-test-pipeline)
 - TypeScript 5.6 + React 19, Tailwind CSS 3.4, Vite 5, React Router 6, TanStack Query 5 (003-ui-visual-hierarchy)
 - N/A (UI-only change; backend remains SQLite via Drizzle ORM) (003-ui-visual-hierarchy)
+- TypeScript 5.6 / Node.js 22 + Fastify 5.8, `@fastify/static` (新規追加), Vite 6 (ビルド), React 19 (004-standalone-mode)
+- SQLite (better-sqlite3) — `apps/api/data/outliner.db`（デフォルト） (004-standalone-mode)
+- TypeScript 5.6 / Node.js 22（Electron内蔵） + Fastify 5.8、`@fastify/static ^8`（新規）、`electron ^36`（新規）、`electron-builder ^25`（新規）、`@electron/rebuild`（新規） (004-standalone-mode)
+- SQLite (better-sqlite3) — `app.getPath('userData')/data/outliner.db`（Electron標準ユーザーデータパス） (004-standalone-mode)
 
 - TypeScript 5.x (frontend/backend), SQL (SQLite 3) + React 19, Vite 7, Node.js 22 LTS, Fastify 5, better-sqlite3, Drizzle ORM, Tailwind CSS 4, shadcn/ui, TanStack Query (001-modern-ai-outliner)
 
@@ -26,10 +30,10 @@ npm test && npm run lint
 TypeScript 5.x (frontend/backend), SQL (SQLite 3): Follow standard conventions
 
 ## Recent Changes
+- 004-standalone-mode: Added TypeScript 5.6 / Node.js 22（Electron内蔵） + Fastify 5.8、`@fastify/static ^8`（新規）、`electron ^36`（新規）、`electron-builder ^25`（新規）、`@electron/rebuild`（新規）
+- 004-standalone-mode: Added TypeScript 5.6 / Node.js 22 + Fastify 5.8, `@fastify/static` (新規追加), Vite 6 (ビルド), React 19
 - 003-ui-visual-hierarchy: Added TypeScript 5.6 + React 19, Tailwind CSS 3.4, Vite 5, React Router 6, TanStack Query 5
-- 002-test-pipeline: Added TypeScript 5.6 / Node.js 24 (LTS) + GitHub Actions (CI基盤), Vitest 2.1 (unit/integration), Playwright 1.48 (E2E), ESLint (lint), tsc (typecheck)
 
-- 001-modern-ai-outliner: Added TypeScript 5.x (frontend/backend), SQL (SQLite 3) + React 19, Vite 7, Node.js 22 LTS, Fastify 5, better-sqlite3, Drizzle ORM, Tailwind CSS 4, shadcn/ui, TanStack Query
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

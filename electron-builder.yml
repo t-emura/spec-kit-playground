@@ -1,0 +1,41 @@
+appId: io.github.t-emura.modern-ai-outliner
+productName: Modern AI Outliner
+
+directories:
+  output: dist-electron
+
+files:
+  - apps/electron/dist/**/*
+  - apps/api/dist/**/*
+  - apps/api/src/db/migrations/**/*
+  - node_modules/**/*
+  - package.json
+
+extraResources:
+  - from: apps/web/dist
+    to: public
+    filter:
+      - "**/*"
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  category: public.app-category.productivity
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+
+publish:
+  provider: github
