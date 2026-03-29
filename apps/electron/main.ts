@@ -50,6 +50,8 @@ app.whenReady().then(async () => {
       preload: path.join(import.meta.dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // ESM preload scripts require sandbox:false in Electron 28+
+      sandbox: false,
     },
   });
 
