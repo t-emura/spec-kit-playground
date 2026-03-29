@@ -34,7 +34,7 @@ export function SearchPanel({ noteId, onResultSelect }: SearchPanelProps) {
   );
 
   return (
-    <div className="search-panel" role="search" aria-label="Search outline">
+    <div className="search-panel bg-surface border-b border-border px-6 py-3" role="search" aria-label="Search outline">
       <input
         role="searchbox"
         type="search"
@@ -43,19 +43,20 @@ export function SearchPanel({ noteId, onResultSelect }: SearchPanelProps) {
         placeholder="Search…"
         aria-label="Search items"
         autoFocus
+        className="w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm text-text placeholder:text-text-muted outline-none focus:border-primary"
       />
 
       {query && (
-        <div className="search-result-count" aria-live="polite">
+        <div className="search-result-count text-xs text-text-muted mt-1" aria-live="polite">
           {searching ? 'Searching…' : `${total} result${total !== 1 ? 's' : ''}`}
         </div>
       )}
 
-      <ul className="search-results" role="listbox">
+      <ul className="search-results mt-2 space-y-1 max-h-48 overflow-y-auto list-none p-0 m-0" role="listbox">
         {results.map((item) => (
           <li
             key={item.id}
-            className="search-result-item"
+            className="search-result-item px-3 py-2 rounded-md text-sm text-text hover:bg-surface-2 cursor-pointer transition-colors"
             role="option"
             aria-selected={false}
             onClick={() => onResultSelect(item.id, query)}
