@@ -46,8 +46,8 @@ describe('Item Tree Move and Collapse State Persistence', () => {
 
   it('moves an item within the tree', async () => {
     const a = await itemService.createItem(noteId, { content: 'A', orderIndex: 0, depth: 0 });
-    const b = await itemService.createItem(noteId, { content: 'B', orderIndex: 1, depth: 0 });
-    const c = await itemService.createItem(noteId, { content: 'C', orderIndex: 2, depth: 0 });
+    const _b = await itemService.createItem(noteId, { content: 'B', orderIndex: 1, depth: 0 });
+    const _c = await itemService.createItem(noteId, { content: 'C', orderIndex: 2, depth: 0 });
 
     // Move A to position 2 (after B and C)
     await itemService.moveItem(a.id, { targetOrderIndex: 2 });

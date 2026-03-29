@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { metadataSchema, upsertMetadataSchema } from '../../../src/schemas/metadata-schema.js';
+import { upsertMetadataSchema } from '../../../src/schemas/metadata-schema.js';
 
 describe('Metadata Schema Validation', () => {
   it('validates valid metadata', () => {

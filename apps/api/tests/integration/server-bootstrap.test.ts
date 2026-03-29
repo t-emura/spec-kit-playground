@@ -1,20 +1,30 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { buildServer } from '../../src/server.js';
-import type { FastifyInstance } from 'fastify';
+import { vi, describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { unlinkSync, existsSync } from 'node:fs';
 
-process.env['SQLITE_DB_PATH'] = ':memory:';
-process.env['NODE_ENV'] = 'test';
+const testDbPath = vi.hoisted(() => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const p = require('node:path').join(require('node:os').tmpdir(), `server-bootstrap-test-${process.pid}.db`);
+  process.env['SQLITE_DB_PATH'] = p;
+  process.env['NODE_ENV'] = 'test';
+  return p;
+});
+
+import { buildServer } from '../../src/server.js';
+import { runMigrations } from '../../src/db/migrate.js';
+import type { FastifyInstance } from 'fastify';
 
 describe('Server Bootstrap', () => {
   let server: FastifyInstance;
 
   beforeAll(async () => {
+    runMigrations(testDbPath);
     server = buildServer();
     await server.ready();
   });
 
   afterAll(async () => {
     await server.close();
+    if (existsSync(testDbPath)) unlinkSync(testDbPath);
   });
 
   it('starts without errors', () => {

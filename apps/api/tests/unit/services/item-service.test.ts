@@ -74,7 +74,7 @@ describe('ItemService', () => {
       { id: 'item-2', orderIndex: 1, depth: 0, parentId: null },
     ]);
     mockItemRepo.move.mockResolvedValue({ id: 'item-2', depth: 1, parentId: 'item-1' });
-    const result = await service.indentItem('item-2');
+    const _result = await service.indentItem('item-2');
     expect(mockItemRepo.move).toHaveBeenCalled();
   });
 

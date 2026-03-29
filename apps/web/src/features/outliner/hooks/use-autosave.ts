@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react';
-import type { OutlineItem } from 'shared-types';
 import { apiClient } from '../../../lib/api-client.js';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';

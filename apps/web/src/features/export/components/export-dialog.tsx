@@ -33,7 +33,7 @@ export function ExportDialog({ noteId, isOpen, onClose }: ExportDialogProps) {
       a.click();
       URL.revokeObjectURL(url);
       setSuccess(true);
-    } catch (e) {
+    } catch {
       setError('Export failed');
     } finally {
       setExporting(false);

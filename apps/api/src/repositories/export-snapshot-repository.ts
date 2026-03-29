@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { exportSnapshots } from '../db/schema.js';
 import type { DB } from '../db/client.js';
