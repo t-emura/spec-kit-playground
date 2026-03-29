@@ -23,8 +23,8 @@
 
 **⚠️ CRITICAL**: `better-sqlite3.node` cannot load from inside `.asar` archives. This must be fixed before any release can work.
 
-- [ ] T001 Add `asarUnpack: ["**/better-sqlite3/**"]` to `electron-builder.yml` so the native `.node` file is extracted outside the asar archive
-- [ ] T002 Add `releaseType: release` under the `publish:` section in `electron-builder.yml` so GitHub Releases are published (not left as Draft)
+- [x] T001 Add `asarUnpack: ["**/better-sqlite3/**"]` to `electron-builder.yml` so the native `.node` file is extracted outside the asar archive
+- [x] T002 Add `releaseType: release` under the `publish:` section in `electron-builder.yml` so GitHub Releases are published (not left as Draft)
 
 **Checkpoint**: `electron-builder.yml` now produces installable binaries that can load `better-sqlite3`
 
@@ -38,10 +38,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T003 [US2] Add `workflow_dispatch` trigger block to `.github/workflows/release.yml` with a `dry_run` boolean input (default: `true`); also add `fail-fast: true` explicitly to the `strategy:` block to ensure that if one platform fails, remaining jobs are cancelled and no partial Release is created (satisfies FR-008)
-- [ ] T004 [US2] Update the `Package and publish` step in `.github/workflows/release.yml` to conditionally pass `--publish never` or `--publish always`: `npx electron-builder --publish ${{ inputs.dry_run == 'true' && 'never' || 'always' }}` — note: `workflow_dispatch` boolean inputs arrive as strings (`'true'`/`'false'`), not JS booleans; tag-push runs have `inputs.dry_run` as empty string which evaluates to `'always'` correctly
-- [ ] T005 [P] [US2] Add `upload-artifact` step in `.github/workflows/release.yml` conditioned on `inputs.dry_run == 'true'`, using matrix-specific artifact name `electron-artifacts-${{ matrix.os }}` to avoid name collisions across parallel jobs; glob pattern: `dist-electron/**/*.{dmg,exe,AppImage}` (excludes `.blockmap` and other electron-builder metadata files)
-- [ ] T006 [P] [US2] Add an inline comment block in `.github/workflows/release.yml` (above the matrix section) documenting: (a) FR-002 is satisfied by the `matrix.os` strategy, (b) FR-005 and FR-007 are satisfied automatically by `electron-builder` reading `productName` and `version` from `package.json`, (c) FR-008 is satisfied by `fail-fast: true` — this serves as traceability between spec requirements and the workflow configuration
+- [x] T003 [US2] Add `workflow_dispatch` trigger block to `.github/workflows/release.yml` with a `dry_run` boolean input (default: `true`); also add `fail-fast: true` explicitly to the `strategy:` block to ensure that if one platform fails, remaining jobs are cancelled and no partial Release is created (satisfies FR-008)
+- [x] T004 [US2] Update the `Package and publish` step in `.github/workflows/release.yml` to conditionally pass `--publish never` or `--publish always`: `npx electron-builder --publish ${{ inputs.dry_run == 'true' && 'never' || 'always' }}` — note: `workflow_dispatch` boolean inputs arrive as strings (`'true'`/`'false'`), not JS booleans; tag-push runs have `inputs.dry_run` as empty string which evaluates to `'always'` correctly
+- [x] T005 [P] [US2] Add `upload-artifact` step in `.github/workflows/release.yml` conditioned on `inputs.dry_run == 'true'`, using matrix-specific artifact name `electron-artifacts-${{ matrix.os }}` to avoid name collisions across parallel jobs; glob pattern: `dist-electron/**/*.{dmg,exe,AppImage}` (excludes `.blockmap` and other electron-builder metadata files)
+- [x] T006 [P] [US2] Add an inline comment block in `.github/workflows/release.yml` (above the matrix section) documenting: (a) FR-002 is satisfied by the `matrix.os` strategy, (b) FR-005 and FR-007 are satisfied automatically by `electron-builder` reading `productName` and `version` from `package.json`, (c) FR-008 is satisfied by `fail-fast: true` — this serves as traceability between spec requirements and the workflow configuration
 
 **Checkpoint**: User Story 2 complete — tag push creates GitHub Release; workflow_dispatch can also trigger builds
 
@@ -55,13 +55,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] In `apps/electron/main.ts`, add a top-level block **before** the `await import('../api/src/index.js')` line: when `app.isPackaged`, compute `path.join(app.getPath('userData'), 'data', 'outliner.db')` and assign to `process.env.SQLITE_DB_PATH` — `app.getPath('userData')` is available before `whenReady()`, so this sets the value before `env.ts` caches it
-- [ ] T008 [US1] In the same top-level block (T007), call `mkdirSync(path.join(app.getPath('userData'), 'data'), { recursive: true })` when `app.isPackaged`, so the DB directory exists before the import triggers `env.ts` evaluation
-- [ ] T009 [US1] Remove the redundant `mkdirSync(dataDir, ...)` inside `app.whenReady()` that was handling packaged mode (now handled at top-level by T008); keep the dev-mode `dataDir` assignment for non-packaged use and verify `STATIC_DIR` setup is unaffected
+- [x] T007 [US1] In `apps/electron/main.ts`, add a top-level block **before** the `await import('../api/src/index.js')` line: when `app.isPackaged`, compute `path.join(app.getPath('userData'), 'data', 'outliner.db')` and assign to `process.env.SQLITE_DB_PATH` — `app.getPath('userData')` is available before `whenReady()`, so this sets the value before `env.ts` caches it
+- [x] T008 [US1] In the same top-level block (T007), call `mkdirSync(path.join(app.getPath('userData'), 'data'), { recursive: true })` when `app.isPackaged`, so the DB directory exists before the import triggers `env.ts` evaluation
+- [x] T009 [US1] Remove the redundant `mkdirSync(dataDir, ...)` inside `app.whenReady()` that was handling packaged mode (now handled at top-level by T008); keep the dev-mode `dataDir` assignment for non-packaged use and verify `STATIC_DIR` setup is unaffected
 
 ### Test for User Story 1 (Constitution §II — required before implementation is complete)
 
-- [ ] T010 [US1] In `tests/e2e/electron-app.spec.ts`, add an assertion after the existing `window.electron.apiBase` check: `GET /v1/notes` returns HTTP 200 with an array response — this confirms the DB was initialized correctly at startup (validates the `app.isPackaged=false` dev path and confirms no regressions from the top-level restructure; the packaged-mode path is validated separately via the independent test in the phase goal above)
+- [x] T010 [US1] In `tests/e2e/electron-app.spec.ts`, add an assertion after the existing `window.electron.apiBase` check: `GET /v1/notes` returns HTTP 200 with an array response — this confirms the DB was initialized correctly at startup (validates the `app.isPackaged=false` dev path and confirms no regressions from the top-level restructure; the packaged-mode path is validated separately via the independent test in the phase goal above)
 
 **Checkpoint**: User Story 1 complete — packaged binary uses `userData` for DB; dev mode unchanged and covered by test
 
@@ -77,8 +77,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T011 [US3] In `.github/workflows/release.yml`, ensure the upload-artifact step created in T005 has its condition expressed as a top-level YAML `if:` field on the step (not embedded inside the `run:` script body): `if: ${{ inputs.dry_run == 'true' }}` — this is a YAML structural concern, not a new condition; T005 defines the step content, T011 confirms the guard is at the YAML step level for readability
-- [ ] T012 [P] [US3] Add a workflow summary step (`$GITHUB_STEP_SUMMARY`) to `.github/workflows/release.yml` that outputs the list of built artifacts and whether they were published or uploaded as artifacts — gives developers immediate feedback without navigating to the Artifacts tab
+- [x] T011 [US3] In `.github/workflows/release.yml`, ensure the upload-artifact step created in T005 has its condition expressed as a top-level YAML `if:` field on the step (not embedded inside the `run:` script body): `if: ${{ inputs.dry_run == 'true' }}` — this is a YAML structural concern, not a new condition; T005 defines the step content, T011 confirms the guard is at the YAML step level for readability
+- [x] T012 [P] [US3] Add a workflow summary step (`$GITHUB_STEP_SUMMARY`) to `.github/workflows/release.yml` that outputs the list of built artifacts and whether they were published or uploaded as artifacts — gives developers immediate feedback without navigating to the Artifacts tab
 
 **Checkpoint**: User Story 3 complete — dry run workflow is independently usable and provides clear feedback
 
@@ -86,11 +86,11 @@
 
 ## Final Phase: Polish & Cross-Cutting Concerns
 
-- [ ] T013 [P] Run `npm run build` locally and verify no TypeScript errors in the modified `apps/electron/main.ts`
-- [ ] T014 [P] Run `npm run typecheck` (or equivalent) to confirm no regressions from the `main.ts` changes
-- [ ] T015 Run existing CI test suite locally (`npm test`) to confirm the `main.ts` top-level restructure does not break the Electron e2e test (`tests/e2e/electron-app.spec.ts`), including the new T010 assertion
-- [ ] T016 Validate `electron-builder.yml` YAML syntax by running `npx electron-builder --config electron-builder.yml --help` or a YAML linter — confirm `asarUnpack` and `releaseType` entries are syntactically valid and interpreted correctly
-- [ ] T017 Create `docs/decisions/` directory if it does not already exist, then create `docs/decisions/001-electron-db-path-userdata.md` as an Architecture Decision Record documenting: the decision to use `app.getPath('userData')` for DB storage in packaged mode, the root cause (env.ts caches SQLITE_DB_PATH at module load time), the chosen fix, and the behavioral change (DB location differs between dev and packaged builds) — satisfies constitution §"Technical Decision Guidelines" which requires ADRs for cross-cutting data storage decisions
+- [x] T013 [P] Run `npm run build` locally and verify no TypeScript errors in the modified `apps/electron/main.ts`
+- [x] T014 [P] Run `npm run typecheck` (or equivalent) to confirm no regressions from the `main.ts` changes
+- [x] T015 Run existing CI test suite locally (`npm test`) to confirm the `main.ts` top-level restructure does not break the Electron e2e test (`tests/e2e/electron-app.spec.ts`), including the new T010 assertion
+- [x] T016 Validate `electron-builder.yml` YAML syntax by running `npx electron-builder --config electron-builder.yml --help` or a YAML linter — confirm `asarUnpack` and `releaseType` entries are syntactically valid and interpreted correctly
+- [x] T017 Create `docs/decisions/` directory if it does not already exist, then create `docs/decisions/002-electron-db-path-userdata.md` as an Architecture Decision Record documenting: the decision to use `app.getPath('userData')` for DB storage in packaged mode, the root cause (env.ts caches SQLITE_DB_PATH at module load time), the chosen fix, and the behavioral change (DB location differs between dev and packaged builds) — satisfies constitution §"Technical Decision Guidelines" which requires ADRs for cross-cutting data storage decisions
 
 ---
 

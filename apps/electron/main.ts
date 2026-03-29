@@ -5,6 +5,16 @@ import { checkStaticDir, checkDbWritable } from './startup-checks.js';
 
 // ESM: set ELECTRON flag before dynamic import to prevent API auto-start
 process.env.ELECTRON = 'true';
+
+// T007 + T008: set SQLITE_DB_PATH BEFORE dynamic import so env.ts caches the correct value.
+// env.ts calls parseEnv() at module load time — setting the variable after import has no effect.
+// app.getPath('userData') is available before app.whenReady(), so we can use it here.
+if (app.isPackaged) {
+  const packedDataDir = path.join(app.getPath('userData'), 'data');
+  mkdirSync(packedDataDir, { recursive: true });
+  process.env.SQLITE_DB_PATH = path.join(packedDataDir, 'outliner.db');
+}
+
 const { buildServer, runMigrations } = await import('../api/src/index.js');
 
 import type { FastifyInstance } from 'fastify';
@@ -22,10 +32,11 @@ app.whenReady().then(async () => {
   // Phase 5 (US3): STATIC_DIR existence check
   if (!checkStaticDir(staticDir, { dialog, app })) return;
 
-  // Phase 4 (US2): create DB directory
-  mkdirSync(dataDir, { recursive: true });
-
   // Phase 5 (US3): DB write permission check
+  // T009: dev mode creates the DB directory here; packaged mode does it at top-level (before import)
+  if (!app.isPackaged) {
+    mkdirSync(dataDir, { recursive: true });
+  }
   if (!checkDbWritable(dataDir, { dialog, app })) return;
 
   // Phase 4 (US2): set env vars for the API server

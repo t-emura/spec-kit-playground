@@ -4,6 +4,13 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # T003 / FR-006: manual trigger for dry-run validation before a real release
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — build binaries but do not publish to GitHub Release'
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -11,6 +18,9 @@ permissions:
 jobs:
   release:
     strategy:
+      # T003 / FR-008: fail-fast prevents partial releases if one platform fails
+      fail-fast: true
+      # FR-002: each OS gets its own runner for native module compatibility
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
@@ -34,7 +44,40 @@ jobs:
       - name: Build
         run: npm run build
 
+      # T004: conditional publish
+      # FR-005: release title includes version — electron-builder uses tag name automatically
+      # FR-007: version embedded in binary — electron-builder reads package.json#version
+      # workflow_dispatch boolean inputs arrive as strings ('true'/'false').
+      # Tag-push runs have inputs.dry_run as empty string → evaluates to '--publish always'.
       - name: Package and publish to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --publish always
+        run: npx electron-builder --publish ${{ inputs.dry_run == 'true' && 'never' || 'always' }}
+
+      # T005 / T011: upload artifacts for dry-run validation (if: at YAML step level per T011)
+      - name: Upload artifacts (dry run only)
+        if: ${{ inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-artifacts-${{ matrix.os }}
+          path: |
+            dist-electron/**/*.dmg
+            dist-electron/**/*.exe
+            dist-electron/**/*.AppImage
+          if-no-files-found: warn
+
+      # T012: workflow summary for immediate build feedback
+      - name: Workflow summary
+        shell: bash
+        run: |
+          echo "## Build Summary — ${{ matrix.os }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ inputs.dry_run }}" == "true" ]]; then
+            echo "| Mode | 🧪 Dry run (artifacts uploaded, not published) |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| Mode | 🚀 Published to GitHub Release |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          ARTIFACTS=$(find dist-electron -maxdepth 2 \( -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" \) 2>/dev/null | while read f; do basename "$f"; done | tr '\n' ' ')
+          echo "| Artifacts | ${ARTIFACTS:-none found} |" >> "$GITHUB_STEP_SUMMARY"

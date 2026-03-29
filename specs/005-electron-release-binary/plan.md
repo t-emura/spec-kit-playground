@@ -108,7 +108,7 @@ const { buildServer, runMigrations } = await import('../api/src/index.js');
 
 ### Architecture Decision Record
 
-`apps/electron/main.ts` の `SQLITE_DB_PATH` 変更はユーザーデータ保存場所（クロスカッティング）に関わるため、Constitution §"Technical Decision Guidelines" に従い `docs/decisions/001-electron-db-path-userdata.md` に ADR を作成する（T017）。
+`apps/electron/main.ts` の `SQLITE_DB_PATH` 変更はユーザーデータ保存場所（クロスカッティング）に関わるため、Constitution §"Technical Decision Guidelines" に従い `docs/decisions/002-electron-db-path-userdata.md` に ADR を作成する（T017）。
 
 ## Complexity Tracking
 

@@ -11,6 +11,11 @@ files:
   - node_modules/**/*
   - package.json
 
+# T001: Extract better-sqlite3 native .node files outside the asar archive.
+# Native modules cannot be loaded from inside asar — without this the app crashes on launch.
+asarUnpack:
+  - "**/better-sqlite3/**"
+
 extraResources:
   - from: apps/web/dist
     to: public
@@ -39,3 +44,5 @@ linux:
 
 publish:
   provider: github
+  # T002: publish as a full Release (not a Draft) so users can download immediately
+  releaseType: release
