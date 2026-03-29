@@ -98,6 +98,9 @@ jobs:
       - name: Install Xvfb for Electron tests
         run: sudo apt-get install -y xvfb
 
+      - name: Rebuild native modules for Electron ABI
+        run: npm run rebuild:native
+
       - name: Run e2e tests
         run: xvfb-run --auto-servernum npm run test:e2e
 

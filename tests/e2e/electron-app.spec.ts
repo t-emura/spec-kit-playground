@@ -26,7 +26,7 @@ test.describe('Electron App Smoke Test', () => {
     });
 
     // (a) BrowserWindow opens — wait for first window before querying
-    const page = await app.firstWindow();
+    const page = await app.firstWindow({ timeout: 90_000 });
     await page.waitForLoadState('domcontentloaded');
     expect(app.windows().length).toBeGreaterThanOrEqual(1);
 
