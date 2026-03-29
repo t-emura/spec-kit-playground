@@ -106,7 +106,7 @@
 - [X] T013 [US2] Update `apps/electron/main.ts` — app.isPackaged STATIC_DIR + SQLITE_DB_PATH env vars
 - [X] T014 [P] [US2] Update `apps/electron/main.ts` — DB dir mkdirSync
 - [X] T015 [US2] Update `apps/electron/main.ts` — graceful shutdown before-quit handler
-- [ ] T016 [P] [US2] Add integration test to `apps/api/tests/integration/server-bootstrap.test.ts` — 以下を検証するテストを追加:
+- [X] T016 [P] [US2] Add integration test to `apps/api/tests/integration/server-bootstrap.test.ts` — 以下を検証するテストを追加:
   - `beforeAll` で `mkdtempSync` を使って一時ディレクトリを作成し `index.html`（最小限の内容で可）を書き込む。`STATIC_DIR` にそのパスを設定してサーバーを起動
   - `GET /` が 200 と `index.html` の内容を返すこと
   - `GET /v1/notes` が JSON を返すこと

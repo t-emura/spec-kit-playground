@@ -28,12 +28,13 @@ app.whenReady().then(async () => {
   // Phase 5 (US3): DB write permission check
   if (!checkDbWritable(dataDir, { dialog, app })) return;
 
-  // Phase 4 (US2): set env vars before migrations and buildServer
+  // Phase 4 (US2): set env vars for the API server
   process.env.STATIC_DIR = staticDir;
-  process.env.SQLITE_DB_PATH = path.join(dataDir, 'outliner.db');
+  const dbPath = path.join(dataDir, 'outliner.db');
+  process.env.SQLITE_DB_PATH = dbPath;
 
-  // Run DB migrations before starting the server
-  runMigrations();
+  // Run DB migrations with explicit path (env module caches values at import time)
+  runMigrations(dbPath);
 
   server = buildServer();
   await server.listen({ port: 0, host: '127.0.0.1' });
@@ -53,6 +54,9 @@ app.whenReady().then(async () => {
   });
 
   win.loadURL(`http://127.0.0.1:${port}`);
+}).catch((err) => {
+  console.error('[main] startup error:', err);
+  app.quit();
 });
 
 // Phase 4 (US2): graceful shutdown — guard prevents re-entrant quit
