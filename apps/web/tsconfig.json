@@ -6,8 +6,9 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "outDir": "./dist",
-    "rootDir": "./src",
-    "composite": true
+    "rootDir": ".",
+    "composite": true,
+    "types": ["vite/client"]
   },
   "include": ["src/**/*", "tests/**/*"]
 }
