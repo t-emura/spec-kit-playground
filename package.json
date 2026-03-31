@@ -20,7 +20,7 @@
     "db:migrate": "npm run db:migrate --workspace=apps/api",
     "db:seed": "npm run db:seed --workspace=apps/api",
     "secret-scan": "grep -r 'password\\|secret\\|token\\|api_key' apps/ --include='*.ts' -l || echo 'No obvious secrets found'",
-    "build:electron": "tsc -p apps/electron/tsconfig.json && esbuild apps/api/src/index.ts --bundle --platform=node --format=esm --external:better-sqlite3 --outfile=apps/electron/dist/api/src/index.js && node -e \"require('fs').cpSync('apps/api/src/db/migrations','apps/electron/dist/api/src/db/migrations',{recursive:true,force:true})\"",
+    "build:electron": "tsc -p apps/electron/tsconfig.json && node scripts/build-api-bundle.mjs && node -e \"require('fs').cpSync('apps/api/src/db/migrations','apps/electron/dist/api/src/db/migrations',{recursive:true,force:true})\"",
     "dev:electron": "ELECTRON=true concurrently \"npm run dev --workspace=apps/api\" \"wait-on http://localhost:8787/health && npm run build:electron && electron .\"",
     "start": "electron .",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3"
