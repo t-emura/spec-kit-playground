@@ -43,8 +43,11 @@ app.whenReady().then(async () => {
   process.env.STATIC_DIR = staticDir;
 
   // Run DB migrations using env.SQLITE_DB_PATH (same path buildServer() uses,
-  // since env is cached at import time and cannot be changed after loading)
-  runMigrations();
+  // since env is cached at import time and cannot be changed after loading).
+  // Pass migrationsDir explicitly so the path stays correct after API bundling
+  // (import.meta.url inside the bundle points to the bundle file, not migrate.js).
+  const migrationsDir = path.join(import.meta.dirname, '../api/src/db/migrations');
+  runMigrations(undefined, migrationsDir);
 
   server = buildServer();
   await server.listen({ port: 0, host: '127.0.0.1' });
