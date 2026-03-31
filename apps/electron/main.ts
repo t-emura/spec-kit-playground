@@ -6,9 +6,15 @@ import { checkStaticDir, checkDbWritable } from './startup-checks.js';
 // ESM: set ELECTRON flag before dynamic import to prevent API auto-start
 process.env.ELECTRON = 'true';
 
-// T007 + T008: set SQLITE_DB_PATH BEFORE dynamic import so env.ts caches the correct value.
-// env.ts calls parseEnv() at module load time — setting the variable after import has no effect.
-// app.getPath('userData') is available before app.whenReady(), so we can use it here.
+// T007 + T008: set SQLITE_DB_PATH and STATIC_DIR BEFORE dynamic import so env.ts caches the
+// correct values. env.ts calls parseEnv() at module load time — setting variables after import
+// has no effect. app.getPath('userData'), app.isPackaged, process.resourcesPath, and
+// app.getAppPath() are all available before app.whenReady().
+const staticDir = app.isPackaged
+  ? path.join(process.resourcesPath, 'public')
+  : path.join(app.getAppPath(), 'public');
+process.env.STATIC_DIR = staticDir;
+
 if (app.isPackaged) {
   const packedDataDir = path.join(app.getPath('userData'), 'data');
   mkdirSync(packedDataDir, { recursive: true });
@@ -23,10 +29,7 @@ let server: FastifyInstance;
 let isQuitting = false;
 
 app.whenReady().then(async () => {
-  // Phase 4 (US2): configure paths based on packaged vs dev mode
-  const staticDir = app.isPackaged
-    ? path.join(process.resourcesPath, 'public')
-    : path.join(app.getAppPath(), 'public');
+  // staticDir is set at top-level before the dynamic import (so env.ts caches the correct value)
   const dataDir = path.join(app.getPath('userData'), 'data');
 
   // Phase 5 (US3): STATIC_DIR existence check
@@ -38,9 +41,6 @@ app.whenReady().then(async () => {
     mkdirSync(dataDir, { recursive: true });
   }
   if (!checkDbWritable(dataDir, { dialog, app })) return;
-
-  // Phase 4 (US2): set env vars for the API server
-  process.env.STATIC_DIR = staticDir;
 
   // Run DB migrations using env.SQLITE_DB_PATH (same path buildServer() uses,
   // since env is cached at import time and cannot be changed after loading).
