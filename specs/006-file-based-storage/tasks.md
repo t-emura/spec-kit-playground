@@ -15,8 +15,8 @@
 
 **Purpose**: Remove SQLite/Drizzle dependencies and update build configuration
 
-- [ ] T001 Remove `better-sqlite3` from root `package.json` dependencies and `drizzle-orm`, `drizzle-kit` from `apps/api/package.json` dependencies. Run `npm install` to update lock file.
-- [ ] T002 [P] Update `scripts/build-api-bundle.mjs`: remove `external: ['better-sqlite3']` setting. Update `electron-builder.yml`: remove `asarUnpack: "**/better-sqlite3/**"` entry.
+- [X] T001 Remove `better-sqlite3` from root `package.json` dependencies and `drizzle-orm`, `drizzle-kit` from `apps/api/package.json` dependencies. Run `npm install` to update lock file.
+- [X] T002 [P] Update `scripts/build-api-bundle.mjs`: remove `external: ['better-sqlite3']` setting. Update `electron-builder.yml`: remove `asarUnpack: "**/better-sqlite3/**"` entry.
 
 ---
 
@@ -26,10 +26,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 [P] Create `apps/api/src/storage/sanitize.ts`: implement `sanitizeFileName(title: string): string` that removes `<>:"/\|?*` and control characters (0x00-0x1F), trims leading/trailing whitespace and dots, falls back to `untitled` for empty results, and truncates to 200 characters. Implement `buildNoteFileName(id: string, title: string): string` that returns `{id}-{sanitized_title}.json`. Implement `extractNoteIdFromFileName(fileName: string): string | null` that parses UUID prefix from filename.
-- [ ] T004 [P] Create `apps/api/src/storage/note-file-schema.ts`: define Zod schemas for NoteFile, Item (recursive with `children: Item[]`), and Metadata per `data-model.md`. Export TypeScript types inferred from schemas. Include `noteFileSchema.parse()` for validation on file read.
-- [ ] T005 Create `apps/api/src/storage/file-client.ts`: implement `readNoteFile(filePath: string): NoteFile | null` (returns null on missing/corrupt file, logs error with pino), `writeNoteFile(dirPath: string, note: NoteFile): void` (atomic write via temp file + `renameSync`, pretty-print JSON with 2-space indent), `deleteNoteFile(filePath: string): void`, `listNoteFiles(dirPath: string): string[]` (lists `*.json` files). All I/O errors must be logged with full context (file path, operation, error message).
-- [ ] T006 Update `apps/api/src/config/env.ts`: replace `SQLITE_DB_PATH` env var with `NOTES_DIR` (default: `'./data/notes'`). Keep all other env vars unchanged.
+- [X] T003 [P] Create `apps/api/src/storage/sanitize.ts`: implement `sanitizeFileName(title: string): string` that removes `<>:"/\|?*` and control characters (0x00-0x1F), trims leading/trailing whitespace and dots, falls back to `untitled` for empty results, and truncates to 200 characters. Implement `buildNoteFileName(id: string, title: string): string` that returns `{id}-{sanitized_title}.json`. Implement `extractNoteIdFromFileName(fileName: string): string | null` that parses UUID prefix from filename.
+- [X] T004 [P] Create `apps/api/src/storage/note-file-schema.ts`: define Zod schemas for NoteFile, Item (recursive with `children: Item[]`), and Metadata per `data-model.md`. Export TypeScript types inferred from schemas. Include `noteFileSchema.parse()` for validation on file read.
+- [X] T005 Create `apps/api/src/storage/file-client.ts`: implement `readNoteFile(filePath: string): NoteFile | null` (returns null on missing/corrupt file, logs error with pino), `writeNoteFile(dirPath: string, note: NoteFile): void` (atomic write via temp file + `renameSync`, pretty-print JSON with 2-space indent), `deleteNoteFile(filePath: string): void`, `listNoteFiles(dirPath: string): string[]` (lists `*.json` files). All I/O errors must be logged with full context (file path, operation, error message).
+- [X] T006 Update `apps/api/src/config/env.ts`: replace `SQLITE_DB_PATH` env var with `NOTES_DIR` (default: `'./data/notes'`). Keep all other env vars unchanged.
 
 **Checkpoint**: Storage layer ready — repository rewrite can begin
 
@@ -43,21 +43,21 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Rewrite `apps/api/src/repositories/note-repository.ts`: replace Drizzle queries with file-client.ts calls. `findAll()` reads all JSON files from `NOTES_DIR` via `listNoteFiles` + `readNoteFile`, returning note metadata (without full item trees for list view). `findById(id)` scans directory for file matching UUID prefix. `create(input)` generates UUID, builds filename via `sanitizeFileName`, writes JSON. `update(id, input)` reads existing file, applies changes, increments version, writes back (rename file if title changed). `delete(id)` calls `deleteNoteFile`. Constructor accepts `notesDir: string` parameter.
-- [ ] T008 [US1] Rewrite `apps/api/src/repositories/item-repository.ts`: replace Drizzle queries with in-memory operations on the nested item tree stored in the note JSON file. `getItemTree(noteId)` reads note file and returns the `items` array (already nested). `createItem(noteId, input)` reads note, inserts new item at correct parent/position in nested tree, writes back. `updateItem(itemId, input)` finds item by ID in tree (recursive search), applies changes, writes back. `deleteItem(itemId)` removes item and all its children from tree, writes back. `moveItem(itemId, targetParentId, targetIndex)`, `indentItem(itemId)`, `outdentItem(itemId)` manipulate tree structure. Constructor accepts `notesDir: string`.
-- [ ] T009 [US1] Rewrite `apps/api/src/repositories/metadata-repository.ts`: replace Drizzle queries with operations on the `metadata` field embedded in each item within the note JSON file. `getMetadata(itemId)` finds item in tree and returns its `metadata` field. `upsertMetadata(itemId, input)` finds item, sets/updates `metadata`, writes note file back. Constructor accepts `notesDir: string`.
-- [ ] T010 [US1] Update `apps/api/src/routes/notes-routes.ts`: change repository initialization from `new NoteRepository(db)` / `new ItemRepository(db)` to `new NoteRepository(env.NOTES_DIR)` / `new ItemRepository(env.NOTES_DIR)`. Remove `db` import. Remove `item-visual-state-repository` usage if present.
-- [ ] T011 [US1] Update `apps/api/src/routes/items-routes.ts`: change repository initialization to use `env.NOTES_DIR`. Remove `db` import. Update item response shape if needed for nested structure.
-- [ ] T012 [US1] Update `apps/api/src/routes/metadata-export-routes.ts`: change metadata repository initialization to use `env.NOTES_DIR`. Remove export route (`POST /v1/notes/:noteId/export`) per FR-010 scope exclusion. Remove `ExportService` and `ExportSnapshotRepository` imports.
-- [ ] T013 [US1] Update `apps/api/src/routes/search-routes.ts`: adapt search to read from JSON files instead of DB. `SearchService` must iterate note files and search item content.
-- [ ] T014 [US1] Remove `apps/api/src/db/` directory entirely: delete `client.ts`, `schema.ts`, `migrate.ts`, `seed.ts`, and `migrations/` folder. Remove `apps/api/src/repositories/export-snapshot-repository.ts` (scoped out). Remove `apps/api/src/repositories/item-visual-state-repository.ts` if it exists and is DB-dependent.
-- [ ] T015 [US1] Update `apps/api/src/index.ts`: remove `runMigrations` export. Update `buildServer()` to no longer depend on DB client. Ensure `NOTES_DIR` directory is created with `mkdirSync` if it doesn't exist.
-- [ ] T016 [US1] Update `apps/electron/main.ts`: replace `process.env.SQLITE_DB_PATH` with `process.env.NOTES_DIR` (packaged: `path.join(app.getPath('userData'), 'data', 'notes')`, dev: `path.join(app.getAppPath(), 'data', 'notes')`). Remove `runMigrations()` call. Remove `migrationsDir` variable. Keep `mkdirSync` for notes directory. Update `startup-checks.ts` if it references DB paths.
-- [ ] T017 [US1] Update `apps/web/src/lib/api-client.ts`: change item type definitions from flat structure (`parentId`, `depth`) to nested structure (`children: Item[]`). Update all type references used by components.
-- [ ] T018 [US1] Update web components that consume item data to work with nested `children` arrays instead of flat `parentId`-based lists. Key files: components that render the outline tree, focus view, and any component that builds tree structure from flat items.
-- [ ] T019 [US1] Rewrite `apps/api/tests/unit/repositories/` test files: replace Drizzle/DB mocks with temp directory-based file I/O tests. Test each repository method (create, read, update, delete) against real files in a temp directory. Use `mkdtempSync` for test isolation.
-- [ ] T020 [US1] Rewrite `apps/api/tests/integration/` test files: replace in-memory SQLite tests with file-based round-trip tests. Test note creation → file exists on disk → read back matches → update persists → delete removes file. Test corrupted file handling (FR-007): write invalid JSON to a file, verify app loads other notes successfully.
-- [ ] T021 [US1] Update `apps/api/tests/unit/services/` test files: update mock repository interfaces to match new constructor signatures (`notesDir` instead of `db`). Verify service tests still pass with updated mocks.
+- [X] T007 [US1] Rewrite `apps/api/src/repositories/note-repository.ts`: replace Drizzle queries with file-client.ts calls. `findAll()` reads all JSON files from `NOTES_DIR` via `listNoteFiles` + `readNoteFile`, returning note metadata (without full item trees for list view). `findById(id)` scans directory for file matching UUID prefix. `create(input)` generates UUID, builds filename via `sanitizeFileName`, writes JSON. `update(id, input)` reads existing file, applies changes, increments version, writes back (rename file if title changed). `delete(id)` calls `deleteNoteFile`. Constructor accepts `notesDir: string` parameter.
+- [X] T008 [US1] Rewrite `apps/api/src/repositories/item-repository.ts`: replace Drizzle queries with in-memory operations on the nested item tree stored in the note JSON file. `getItemTree(noteId)` reads note file and returns the `items` array (already nested). `createItem(noteId, input)` reads note, inserts new item at correct parent/position in nested tree, writes back. `updateItem(itemId, input)` finds item by ID in tree (recursive search), applies changes, writes back. `deleteItem(itemId)` removes item and all its children from tree, writes back. `moveItem(itemId, targetParentId, targetIndex)`, `indentItem(itemId)`, `outdentItem(itemId)` manipulate tree structure. Constructor accepts `notesDir: string`.
+- [X] T009 [US1] Rewrite `apps/api/src/repositories/metadata-repository.ts`: replace Drizzle queries with operations on the `metadata` field embedded in each item within the note JSON file. `getMetadata(itemId)` finds item in tree and returns its `metadata` field. `upsertMetadata(itemId, input)` finds item, sets/updates `metadata`, writes note file back. Constructor accepts `notesDir: string`.
+- [X] T010 [US1] Update `apps/api/src/routes/notes-routes.ts`: change repository initialization from `new NoteRepository(db)` / `new ItemRepository(db)` to `new NoteRepository(env.NOTES_DIR)` / `new ItemRepository(env.NOTES_DIR)`. Remove `db` import. Remove `item-visual-state-repository` usage if present.
+- [X] T011 [US1] Update `apps/api/src/routes/items-routes.ts`: change repository initialization to use `env.NOTES_DIR`. Remove `db` import. Update item response shape if needed for nested structure.
+- [X] T012 [US1] Update `apps/api/src/routes/metadata-export-routes.ts`: change metadata repository initialization to use `env.NOTES_DIR`. Remove export route (`POST /v1/notes/:noteId/export`) per FR-010 scope exclusion. Remove `ExportService` and `ExportSnapshotRepository` imports.
+- [X] T013 [US1] Update `apps/api/src/routes/search-routes.ts`: adapt search to read from JSON files instead of DB. `SearchService` must iterate note files and search item content.
+- [X] T014 [US1] Remove `apps/api/src/db/` directory entirely: delete `client.ts`, `schema.ts`, `migrate.ts`, `seed.ts`, and `migrations/` folder. Remove `apps/api/src/repositories/export-snapshot-repository.ts` (scoped out). Remove `apps/api/src/repositories/item-visual-state-repository.ts` if it exists and is DB-dependent.
+- [X] T015 [US1] Update `apps/api/src/index.ts`: remove `runMigrations` export. Update `buildServer()` to no longer depend on DB client. Ensure `NOTES_DIR` directory is created with `mkdirSync` if it doesn't exist.
+- [X] T016 [US1] Update `apps/electron/main.ts`: replace `process.env.SQLITE_DB_PATH` with `process.env.NOTES_DIR` (packaged: `path.join(app.getPath('userData'), 'data', 'notes')`, dev: `path.join(app.getAppPath(), 'data', 'notes')`). Remove `runMigrations()` call. Remove `migrationsDir` variable. Keep `mkdirSync` for notes directory. Update `startup-checks.ts` if it references DB paths.
+- [X] T017 [US1] Update `apps/web/src/lib/api-client.ts`: change item type definitions from flat structure (`parentId`, `depth`) to nested structure (`children: Item[]`). Update all type references used by components.
+- [X] T018 [US1] Update web components that consume item data to work with nested `children` arrays instead of flat `parentId`-based lists. Key files: components that render the outline tree, focus view, and any component that builds tree structure from flat items.
+- [X] T019 [US1] Rewrite `apps/api/tests/unit/repositories/` test files: replace Drizzle/DB mocks with temp directory-based file I/O tests. Test each repository method (create, read, update, delete) against real files in a temp directory. Use `mkdtempSync` for test isolation.
+- [X] T020 [US1] Rewrite `apps/api/tests/integration/` test files: replace in-memory SQLite tests with file-based round-trip tests. Test note creation → file exists on disk → read back matches → update persists → delete removes file. Test corrupted file handling (FR-007): write invalid JSON to a file, verify app loads other notes successfully.
+- [X] T021 [US1] Update `apps/api/tests/unit/services/` test files: update mock repository interfaces to match new constructor signatures (`notesDir` instead of `db`). Verify service tests still pass with updated mocks.
 
 **Checkpoint**: At this point, User Story 1 should be fully functional — notes save to and load from JSON files. App restart preserves all data.
 
@@ -71,8 +71,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Verify and ensure JSON output readability in `apps/api/src/storage/file-client.ts`: confirm `JSON.stringify(note, null, 2)` produces properly indented, human-readable output. Verify Japanese characters are NOT escaped (no `\uXXXX` — Node.js default is fine). Verify file naming includes sanitized title per FR-002.
-- [ ] T023 [US2] Add integration test for backup/restore scenario in `apps/api/tests/integration/`: create a note via API, copy the resulting JSON file to a temp location, delete the original, copy back, restart server, verify note is restored with all items and metadata intact.
+- [X] T022 [US2] Verify and ensure JSON output readability in `apps/api/src/storage/file-client.ts`: confirm `JSON.stringify(note, null, 2)` produces properly indented, human-readable output. Verify Japanese characters are NOT escaped (no `\uXXXX` — Node.js default is fine). Verify file naming includes sanitized title per FR-002.
+- [X] T023 [US2] Add integration test for backup/restore scenario in `apps/api/tests/integration/`: create a note via API, copy the resulting JSON file to a temp location, delete the original, copy back, restart server, verify note is restored with all items and metadata intact.
 
 **Checkpoint**: Files are human-readable, identifiable by filename, and can be backed up/restored by simple copy.
 
@@ -82,11 +82,11 @@
 
 **Purpose**: Cleanup, documentation, and final validation
 
-- [ ] T024 [P] Update `apps/api/src/services/export-service.ts` and `apps/api/src/services/search-service.ts`: remove or stub DB-dependent logic. Remove export-service.ts if no longer used (FR-010 scoped out).
-- [ ] T025 Run `npm run typecheck` and fix all TypeScript errors across the monorepo.
-- [ ] T026 Run `npm run test:unit` and `npm run build:electron` — fix all test failures and build errors. Verify esbuild bundle succeeds without better-sqlite3 external.
-- [ ] T027 Run the full CI pipeline locally (`npm run lint && npm run typecheck && npm run test:unit && npm run build:electron`) and verify all checks pass.
-- [ ] T028 [P] Clean up unused imports and dead code across all modified files. Remove any remaining references to Drizzle, better-sqlite3, or the old `db/` module.
+- [X] T024 [P] Update `apps/api/src/services/export-service.ts` and `apps/api/src/services/search-service.ts`: remove or stub DB-dependent logic. Remove export-service.ts if no longer used (FR-010 scoped out).
+- [X] T025 Run `npm run typecheck` and fix all TypeScript errors across the monorepo.
+- [X] T026 Run `npm run test:unit` and `npm run build:electron` — fix all test failures and build errors. Verify esbuild bundle succeeds without better-sqlite3 external.
+- [X] T027 Run the full CI pipeline locally (`npm run lint && npm run typecheck && npm run test:unit && npm run build:electron`) and verify all checks pass.
+- [X] T028 [P] Clean up unused imports and dead code across all modified files. Remove any remaining references to Drizzle, better-sqlite3, or the old `db/` module.
 
 ---
 
