@@ -6,9 +6,6 @@ directories:
 
 files:
   - apps/electron/dist/**/*
-  - apps/api/dist/**/*
-  - apps/api/src/db/migrations/**/*
-  - node_modules/**/*
   - package.json
 
 # T001: Extract better-sqlite3 native .node files outside the asar archive.

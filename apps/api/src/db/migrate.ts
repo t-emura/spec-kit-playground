@@ -7,14 +7,15 @@ import { mkdirSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export function runMigrations(dbPath?: string) {
+export function runMigrations(dbPath?: string, migrationsDir?: string) {
   const targetPath = dbPath ?? env.SQLITE_DB_PATH;
   mkdirSync(dirname(targetPath), { recursive: true });
   const sqlite = new Database(targetPath);
   sqlite.pragma('foreign_keys = ON');
   sqlite.pragma('journal_mode = WAL');
 
-  const migration = readFileSync(join(__dirname, 'migrations/0001_initial.sql'), 'utf-8');
+  const migDir = migrationsDir ?? join(__dirname, 'migrations');
+  const migration = readFileSync(join(migDir, '0001_initial.sql'), 'utf-8');
   sqlite.exec(migration);
   sqlite.close();
 }
