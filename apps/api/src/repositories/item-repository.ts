@@ -1,8 +1,8 @@
-import { eq, asc, and, gte, sql, like, isNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { items } from '../db/schema.js';
-import type { DB } from '../db/client.js';
 import type { OutlineItem, HighlightLevel, ItemStatus } from 'shared-types';
+import type { NoteRepository } from './note-repository.js';
+import type { FileItem, NoteFile } from '../storage/note-file-schema.js';
+import { listNoteFiles, readNoteFile } from '../storage/file-client.js';
 
 export type { OutlineItem };
 
@@ -25,166 +25,219 @@ export interface MoveItemInput {
   targetOrderIndex: number;
 }
 
-function parentEq(value: string | null | undefined) {
-  return value == null ? isNull(items.parentId) : eq(items.parentId, value);
-}
-
 export class ItemRepository {
-  constructor(private readonly db: DB) {}
+  constructor(
+    private readonly notesDir: string,
+    private readonly noteRepo: NoteRepository,
+  ) {}
 
   async findByNoteId(noteId: string): Promise<OutlineItem[]> {
-    const rows = await this.db
-      .select()
-      .from(items)
-      .where(eq(items.noteId, noteId))
-      .orderBy(asc(items.orderIndex));
-    return rows.map(toItem);
+    const noteFile = this.noteRepo.findNoteFileById(noteId);
+    if (!noteFile) return [];
+    return flattenItems(noteFile.items, noteId);
   }
 
   async searchItems(noteId: string, query: string): Promise<OutlineItem[]> {
-    const rows = await this.db
-      .select()
-      .from(items)
-      .where(and(eq(items.noteId, noteId), like(items.content, `%${query}%`)))
-      .orderBy(asc(items.orderIndex));
-    return rows.map(toItem);
+    const all = await this.findByNoteId(noteId);
+    const lower = query.toLowerCase();
+    return all.filter((item) => item.content.toLowerCase().includes(lower));
   }
 
   async findById(id: string): Promise<OutlineItem | null> {
-    const rows = await this.db.select().from(items).where(eq(items.id, id));
-    if (rows.length === 0) return null;
-    return toItem(rows[0]!);
+    const { noteFile, item } = this.findItemInAllNotes(id) ?? {};
+    if (!noteFile || !item) return null;
+    return fileItemToOutlineItem(item, noteFile.id, findParentId(noteFile.items, id), findDepth(noteFile.items, id));
   }
 
   async create(noteId: string, input: CreateItemInput): Promise<OutlineItem> {
+    const noteFile = this.noteRepo.findNoteFileById(noteId);
+    if (!noteFile) throw Object.assign(new Error(`Note not found: ${noteId}`), { statusCode: 404 });
+
     const now = new Date().toISOString();
     const id = uuidv4();
-
-    // Shift existing items to make space for the new one
-    await this.db
-      .update(items)
-      .set({ orderIndex: sql`${items.orderIndex} + 1`, updatedAt: now })
-      .where(
-        and(
-          eq(items.noteId, noteId),
-          parentEq(input.parentId),
-          gte(items.orderIndex, input.orderIndex),
-        ),
-      );
-
-    await this.db.insert(items).values({
+    const newItem: FileItem = {
       id,
-      noteId,
-      parentId: input.parentId ?? null,
       orderIndex: input.orderIndex,
-      depth: input.depth,
       content: input.content,
-      isCollapsed: false,
-      highlightLevel: 'none',
       status: 'active',
+      highlightLevel: 'none',
+      isCollapsed: false,
       createdAt: now,
       updatedAt: now,
-    });
+      metadata: null,
+      children: [],
+    };
 
-    return (await this.findById(id))!;
+    if (input.parentId) {
+      const parent = findItemById(noteFile.items, input.parentId);
+      if (!parent) throw Object.assign(new Error(`Parent not found: ${input.parentId}`), { statusCode: 404 });
+      // Shift existing siblings
+      for (const child of parent.children) {
+        if (child.orderIndex >= input.orderIndex) child.orderIndex++;
+      }
+      parent.children.push(newItem);
+      parent.children.sort((a, b) => a.orderIndex - b.orderIndex);
+    } else {
+      // Root-level item
+      for (const item of noteFile.items) {
+        if (item.orderIndex >= input.orderIndex) item.orderIndex++;
+      }
+      noteFile.items.push(newItem);
+      noteFile.items.sort((a, b) => a.orderIndex - b.orderIndex);
+    }
+
+    this.noteRepo.writeNoteFileBack(noteFile);
+    return fileItemToOutlineItem(newItem, noteId, input.parentId ?? null, input.depth);
   }
 
   async update(id: string, input: UpdateItemInput): Promise<OutlineItem | null> {
-    const existing = await this.findById(id);
-    if (!existing) return null;
+    const result = this.findItemInAllNotes(id);
+    if (!result) return null;
 
+    const { noteFile, item } = result;
     const now = new Date().toISOString();
-    await this.db
-      .update(items)
-      .set({
-        content: input.content ?? existing.content,
-        isCollapsed: input.isCollapsed ?? existing.isCollapsed,
-        highlightLevel: input.highlightLevel ?? existing.highlightLevel,
-        status: input.status ?? existing.status,
-        updatedAt: now,
-      })
-      .where(eq(items.id, id));
+    if (input.content !== undefined) item.content = input.content;
+    if (input.isCollapsed !== undefined) item.isCollapsed = input.isCollapsed;
+    if (input.highlightLevel !== undefined) item.highlightLevel = input.highlightLevel;
+    if (input.status !== undefined) item.status = input.status;
+    item.updatedAt = now;
 
-    return this.findById(id);
+    this.noteRepo.writeNoteFileBack(noteFile);
+    return fileItemToOutlineItem(item, noteFile.id, findParentId(noteFile.items, id), findDepth(noteFile.items, id));
   }
 
   async delete(id: string): Promise<void> {
-    // Cascade handled by FK constraint, but also delete descendants manually for safety
-    await this.deleteDescendants(id);
-    await this.db.delete(items).where(eq(items.id, id));
-  }
+    const result = this.findItemInAllNotes(id);
+    if (!result) return;
 
-  private async deleteDescendants(parentId: string): Promise<void> {
-    const children = await this.db.select().from(items).where(eq(items.parentId, parentId));
-    for (const child of children) {
-      await this.deleteDescendants(child.id);
-      await this.db.delete(items).where(eq(items.id, child.id));
-    }
+    const { noteFile } = result;
+    removeItemById(noteFile.items, id);
+    this.noteRepo.writeNoteFileBack(noteFile);
   }
 
   async move(id: string, input: MoveItemInput): Promise<OutlineItem | null> {
-    const item = await this.findById(id);
-    if (!item) return null;
+    const result = this.findItemInAllNotes(id);
+    if (!result) return null;
 
-    const now = new Date().toISOString();
-    const targetParentId = input.targetParentId !== undefined ? input.targetParentId : item.parentId;
-    const targetDepth = targetParentId === null ? 0 : await this.getDepthForParent(targetParentId, item);
+    const { noteFile } = result;
+    // Remove item from current position
+    const removed = extractItemById(noteFile.items, id);
+    if (!removed) return null;
 
-    // Remove from old position (shift items down)
-    await this.db
-      .update(items)
-      .set({ orderIndex: sql`${items.orderIndex} - 1`, updatedAt: now })
-      .where(
-        and(
-          eq(items.noteId, item.noteId),
-          parentEq(item.parentId),
-          gte(items.orderIndex, item.orderIndex),
-        ),
-      );
+    const targetParentId = input.targetParentId !== undefined ? input.targetParentId : findParentId(noteFile.items, id);
 
-    // Shift items at target position up
-    await this.db
-      .update(items)
-      .set({ orderIndex: sql`${items.orderIndex} + 1`, updatedAt: now })
-      .where(
-        and(
-          eq(items.noteId, item.noteId),
-          parentEq(targetParentId),
-          gte(items.orderIndex, input.targetOrderIndex),
-        ),
-      );
+    // Insert at new position
+    if (targetParentId) {
+      const parent = findItemById(noteFile.items, targetParentId);
+      if (!parent) return null;
+      for (const child of parent.children) {
+        if (child.orderIndex >= input.targetOrderIndex) child.orderIndex++;
+      }
+      removed.orderIndex = input.targetOrderIndex;
+      parent.children.push(removed);
+      parent.children.sort((a, b) => a.orderIndex - b.orderIndex);
+    } else {
+      for (const item of noteFile.items) {
+        if (item.orderIndex >= input.targetOrderIndex) item.orderIndex++;
+      }
+      removed.orderIndex = input.targetOrderIndex;
+      noteFile.items.push(removed);
+      noteFile.items.sort((a, b) => a.orderIndex - b.orderIndex);
+    }
 
-    await this.db
-      .update(items)
-      .set({
-        parentId: targetParentId,
-        orderIndex: input.targetOrderIndex,
-        depth: targetDepth,
-        updatedAt: now,
-      })
-      .where(eq(items.id, id));
+    removed.updatedAt = new Date().toISOString();
+    this.noteRepo.writeNoteFileBack(noteFile);
 
-    return this.findById(id);
+    const depth = targetParentId ? findDepth(noteFile.items, id) : 0;
+    return fileItemToOutlineItem(removed, noteFile.id, targetParentId ?? null, depth);
   }
 
-  private async getDepthForParent(parentId: string, _item: OutlineItem): Promise<number> {
-    const parent = await this.findById(parentId);
-    return parent ? parent.depth + 1 : 0;
+  private findItemInAllNotes(itemId: string): { noteFile: NoteFile; item: FileItem } | null {
+    const files = listNoteFiles(this.notesDir);
+    for (const filePath of files) {
+      const noteFile = readNoteFile(filePath);
+      if (!noteFile) continue;
+      const item = findItemById(noteFile.items, itemId);
+      if (item) return { noteFile, item };
+    }
+    return null;
   }
 }
 
-function toItem(row: typeof items.$inferSelect): OutlineItem {
+// Helper functions for tree manipulation
+
+function findItemById(items: FileItem[], id: string): FileItem | null {
+  for (const item of items) {
+    if (item.id === id) return item;
+    const found = findItemById(item.children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function findParentId(items: FileItem[], targetId: string): string | null {
+  for (const item of items) {
+    for (const child of item.children) {
+      if (child.id === targetId) return item.id;
+      const found = findParentId(item.children, targetId);
+      if (found !== undefined) return found;
+    }
+  }
+  return null;
+}
+
+function findDepth(items: FileItem[], targetId: string, currentDepth = 0): number {
+  for (const item of items) {
+    if (item.id === targetId) return currentDepth;
+    const depth = findDepth(item.children, targetId, currentDepth + 1);
+    if (depth >= 0) return depth;
+  }
+  return -1;
+}
+
+function removeItemById(items: FileItem[], id: string): boolean {
+  const idx = items.findIndex((item) => item.id === id);
+  if (idx >= 0) {
+    items.splice(idx, 1);
+    return true;
+  }
+  for (const item of items) {
+    if (removeItemById(item.children, id)) return true;
+  }
+  return false;
+}
+
+function extractItemById(items: FileItem[], id: string): FileItem | null {
+  const idx = items.findIndex((item) => item.id === id);
+  if (idx >= 0) return items.splice(idx, 1)[0]!;
+  for (const item of items) {
+    const found = extractItemById(item.children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+function flattenItems(items: FileItem[], noteId: string, parentId: string | null = null, depth = 0): OutlineItem[] {
+  const result: OutlineItem[] = [];
+  for (const item of items) {
+    result.push(fileItemToOutlineItem(item, noteId, parentId, depth));
+    result.push(...flattenItems(item.children, noteId, item.id, depth + 1));
+  }
+  return result;
+}
+
+function fileItemToOutlineItem(item: FileItem, noteId: string, parentId: string | null, depth: number): OutlineItem {
   return {
-    id: row.id,
-    noteId: row.noteId,
-    parentId: row.parentId,
-    orderIndex: row.orderIndex,
-    depth: row.depth,
-    content: row.content,
-    isCollapsed: row.isCollapsed,
-    highlightLevel: row.highlightLevel,
-    status: row.status,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    id: item.id,
+    noteId,
+    parentId,
+    orderIndex: item.orderIndex,
+    depth,
+    content: item.content,
+    isCollapsed: item.isCollapsed,
+    highlightLevel: item.highlightLevel,
+    status: item.status,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   };
 }

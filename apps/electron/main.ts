@@ -1,27 +1,26 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { mkdirSync } from 'fs';
-import { checkStaticDir, checkDbWritable } from './startup-checks.js';
+import { checkStaticDir, checkNotesDir } from './startup-checks.js';
 
 // ESM: set ELECTRON flag before dynamic import to prevent API auto-start
 process.env.ELECTRON = 'true';
 
-// T007 + T008: set SQLITE_DB_PATH and STATIC_DIR BEFORE dynamic import so env.ts caches the
-// correct values. env.ts calls parseEnv() at module load time — setting variables after import
-// has no effect. app.getPath('userData'), app.isPackaged, process.resourcesPath, and
-// app.getAppPath() are all available before app.whenReady().
+// Set NOTES_DIR and STATIC_DIR BEFORE dynamic import so env.ts caches the
+// correct values. env.ts calls parseEnv() at module load time — setting variables
+// after import has no effect.
 const staticDir = app.isPackaged
   ? path.join(process.resourcesPath, 'public')
   : path.join(app.getAppPath(), 'public');
 process.env.STATIC_DIR = staticDir;
 
-if (app.isPackaged) {
-  const packedDataDir = path.join(app.getPath('userData'), 'data');
-  mkdirSync(packedDataDir, { recursive: true });
-  process.env.SQLITE_DB_PATH = path.join(packedDataDir, 'outliner.db');
-}
+const notesDir = app.isPackaged
+  ? path.join(app.getPath('userData'), 'data', 'notes')
+  : path.join(app.getAppPath(), 'data', 'notes');
+mkdirSync(notesDir, { recursive: true });
+process.env.NOTES_DIR = notesDir;
 
-const { buildServer, runMigrations } = await import('../api/src/index.js');
+const { buildServer } = await import('../api/src/index.js');
 
 import type { FastifyInstance } from 'fastify';
 
@@ -29,25 +28,8 @@ let server: FastifyInstance;
 let isQuitting = false;
 
 app.whenReady().then(async () => {
-  // staticDir is set at top-level before the dynamic import (so env.ts caches the correct value)
-  const dataDir = path.join(app.getPath('userData'), 'data');
-
-  // Phase 5 (US3): STATIC_DIR existence check
   if (!checkStaticDir(staticDir, { dialog, app })) return;
-
-  // Phase 5 (US3): DB write permission check
-  // T009: dev mode creates the DB directory here; packaged mode does it at top-level (before import)
-  if (!app.isPackaged) {
-    mkdirSync(dataDir, { recursive: true });
-  }
-  if (!checkDbWritable(dataDir, { dialog, app })) return;
-
-  // Run DB migrations using env.SQLITE_DB_PATH (same path buildServer() uses,
-  // since env is cached at import time and cannot be changed after loading).
-  // Pass migrationsDir explicitly so the path stays correct after API bundling
-  // (import.meta.url inside the bundle points to the bundle file, not migrate.js).
-  const migrationsDir = path.join(import.meta.dirname, '../api/src/db/migrations');
-  runMigrations(undefined, migrationsDir);
+  if (!checkNotesDir(notesDir, { dialog, app })) return;
 
   server = buildServer();
   await server.listen({ port: 0, host: '127.0.0.1' });
@@ -63,7 +45,6 @@ app.whenReady().then(async () => {
       preload: path.join(import.meta.dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      // ESM preload scripts require sandbox:false in Electron 28+
       sandbox: false,
     },
   });
@@ -74,7 +55,6 @@ app.whenReady().then(async () => {
   app.quit();
 });
 
-// Phase 4 (US2): graceful shutdown — guard prevents re-entrant quit
 app.on('before-quit', async (event) => {
   if (isQuitting) return;
   event.preventDefault();

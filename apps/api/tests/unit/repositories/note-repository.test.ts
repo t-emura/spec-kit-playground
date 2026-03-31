@@ -1,98 +1,83 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { NoteRepository } from '../../../src/repositories/note-repository.js';
 import type { WorkspaceNote } from '../../../src/repositories/note-repository.js';
 
-// Unit tests for note-repository - expectations define the interface
+let tmpDir: string;
+let repo: NoteRepository;
+
+beforeEach(() => {
+  tmpDir = mkdtempSync(join(tmpdir(), 'note-repo-test-'));
+  repo = new NoteRepository(tmpDir);
+});
+afterEach(() => rmSync(tmpDir, { recursive: true }));
+
 describe('NoteRepository', () => {
-  it('should be importable and expose required methods', async () => {
-    const { NoteRepository } = await import('../../../src/repositories/note-repository.js');
-    const repo = new NoteRepository(undefined as any);
-    expect(typeof repo.findAll).toBe('function');
-    expect(typeof repo.findById).toBe('function');
-    expect(typeof repo.create).toBe('function');
-    expect(typeof repo.update).toBe('function');
-    expect(typeof repo.delete).toBe('function');
+  it('findAll returns empty array initially', async () => {
+    const notes = await repo.findAll();
+    expect(notes).toEqual([]);
   });
 
-  describe('with in-memory DB', () => {
-    let db: any;
-    let NoteRepository: any;
+  it('creates a note and returns it with an id', async () => {
+    const note = await repo.create({ title: 'Test Note' });
+    expect(note.id).toBeDefined();
+    expect(note.title).toBe('Test Note');
+    expect(note.version).toBe(1);
+    expect(note.archived).toBe(false);
+  });
 
-    beforeEach(async () => {
-      const Database = (await import('better-sqlite3')).default;
-      const { readFileSync } = await import('node:fs');
-      const { join, dirname } = await import('node:path');
-      const { fileURLToPath } = await import('node:url');
-      const { drizzle } = await import('drizzle-orm/better-sqlite3');
-      const schema = await import('../../../src/db/schema.js');
-      const module = await import('../../../src/repositories/note-repository.js');
-      NoteRepository = module.NoteRepository;
+  it('finds all notes', async () => {
+    await repo.create({ title: 'Note A' });
+    await repo.create({ title: 'Note B' });
+    const notes = await repo.findAll();
+    expect(notes).toHaveLength(2);
+  });
 
-      const sqlite = new Database(':memory:');
-      sqlite.pragma('foreign_keys = ON');
-      const __dirname = dirname(fileURLToPath(import.meta.url));
-      const migration = readFileSync(join(__dirname, '../../../src/db/migrations/0001_initial.sql'), 'utf-8');
-      sqlite.exec(migration);
-      db = drizzle(sqlite, { schema });
-    });
+  it('finds a note by id', async () => {
+    const created = await repo.create({ title: 'Find Me' });
+    const found = await repo.findById(created.id);
+    expect(found).toBeDefined();
+    expect(found!.title).toBe('Find Me');
+  });
 
-    it('creates a note and returns it with an id', async () => {
-      const repo = new NoteRepository(db);
-      const note = await repo.create({ title: 'Test Note' });
-      expect(note.id).toBeDefined();
-      expect(note.title).toBe('Test Note');
-      expect(note.version).toBe(1);
-      expect(note.archived).toBe(false);
-    });
+  it('returns null for non-existent id', async () => {
+    const found = await repo.findById('non-existent');
+    expect(found).toBeNull();
+  });
 
-    it('finds all notes', async () => {
-      const repo = new NoteRepository(db);
-      await repo.create({ title: 'Note A' });
-      await repo.create({ title: 'Note B' });
-      const notes = await repo.findAll();
-      expect(notes).toHaveLength(2);
-    });
+  it('updates a note title', async () => {
+    const note = await repo.create({ title: 'Original' });
+    const updated = await repo.update(note.id, { title: 'Updated', version: 1 });
+    expect(updated!.title).toBe('Updated');
+    expect(updated!.version).toBe(2);
+  });
 
-    it('finds a note by id', async () => {
-      const repo = new NoteRepository(db);
-      const created = await repo.create({ title: 'Find Me' });
-      const found = await repo.findById(created.id);
-      expect(found).toBeDefined();
-      expect(found!.title).toBe('Find Me');
-    });
+  it('throws conflict error when version mismatches', async () => {
+    const note = await repo.create({ title: 'Version Test' });
+    await expect(repo.update(note.id, { title: 'New', version: 99 })).rejects.toThrow('Version conflict');
+  });
 
-    it('returns null for non-existent id', async () => {
-      const repo = new NoteRepository(db);
-      const found = await repo.findById('non-existent');
-      expect(found).toBeNull();
-    });
+  it('deletes a note', async () => {
+    const note = await repo.create({ title: 'Delete Me' });
+    await repo.delete(note.id);
+    const found = await repo.findById(note.id);
+    expect(found).toBeNull();
+  });
 
-    it('updates a note title', async () => {
-      const repo = new NoteRepository(db);
-      const note = await repo.create({ title: 'Original' });
-      const updated = await repo.update(note.id, { title: 'Updated', version: 1 });
-      expect(updated!.title).toBe('Updated');
-      expect(updated!.version).toBe(2);
-    });
+  it('title change renames the file on disk', async () => {
+    const note = await repo.create({ title: 'Original Title' });
+    await repo.update(note.id, { title: 'Renamed Title', version: 1 });
+    const files = readdirSync(tmpDir).filter((f) => f.endsWith('.json'));
+    expect(files).toHaveLength(1);
+    expect(files[0]).toContain('Renamed Title');
+    expect(files[0]).not.toContain('Original Title');
+  });
 
-    it('throws conflict error when version mismatches', async () => {
-      const repo = new NoteRepository(db);
-      const note = await repo.create({ title: 'Version Test' });
-      await expect(repo.update(note.id, { title: 'New', version: 99 })).rejects.toThrow();
-    });
-
-    it('deletes a note', async () => {
-      const repo = new NoteRepository(db);
-      const note = await repo.create({ title: 'Delete Me' });
-      await repo.delete(note.id);
-      const found = await repo.findById(note.id);
-      expect(found).toBeNull();
-    });
-
-    it('does not include archived notes in normal listing by default', async () => {
-      const repo = new NoteRepository(db);
-      await repo.create({ title: 'Active' });
-      const allNotes = await repo.findAll();
-      expect(allNotes.some((n: WorkspaceNote) => n.archived)).toBe(false);
-    });
+  it('does not include archived notes in normal listing by default', async () => {
+    await repo.create({ title: 'Active' });
+    const allNotes = await repo.findAll();
+    expect(allNotes.some((n: WorkspaceNote) => n.archived)).toBe(false);
   });
 });

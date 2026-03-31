@@ -4,8 +4,7 @@
 // Why this is needed: electron-builder's default '!**/node_modules' pattern
 // blocks the explicit 'node_modules/**/*' files entry, and the root package.json
 // has no 'dependencies', so electron-builder's smart pruner packages zero
-// node_modules into the asar. Bundling inlines all JS deps except better-sqlite3
-// (a native module that must remain external).
+// node_modules into the asar. Bundling inlines all JS deps.
 //
 // Why the createRequire banner: esbuild's __require shim in ESM bundles requires
 // the global `require` to be available, which it is NOT in Node.js/Electron ESM
@@ -19,7 +18,6 @@ const result = await esbuild.build({
   bundle: true,
   platform: 'node',
   format: 'esm',
-  external: ['better-sqlite3'],
   banner: {
     js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
   },

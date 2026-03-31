@@ -3,7 +3,6 @@ import { OutlineTree } from '../features/outliner/components/outline-tree.js';
 import { useAutosave } from '../features/outliner/hooks/use-autosave.js';
 import { HistoryStore } from '../features/outliner/stores/history-store.js';
 import { MetadataPanel } from '../features/metadata/components/metadata-panel.js';
-import { ExportDialog } from '../features/export/components/export-dialog.js';
 import { SearchPanel } from '../features/search/components/search-panel.js';
 import { apiClient } from '../lib/api-client.js';
 import type { OutlineItem } from 'shared-types';
@@ -20,7 +19,6 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
   const [loading, setLoading] = useState(true);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [showMetadata, setShowMetadata] = useState(false);
-  const [showExport, setShowExport] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [focusItemId, setFocusItemId] = useState<string | null>(null);
@@ -148,12 +146,6 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
         <div className="workspace-actions flex items-center gap-2">
           <button onClick={handleUndo} disabled={!historyRef.current.canUndo()} aria-label="Undo" className="btn-ghost px-2 py-1 text-lg">↩</button>
           <button onClick={handleRedo} disabled={!historyRef.current.canRedo()} aria-label="Redo" className="btn-ghost px-2 py-1 text-lg">↪</button>
-          <button
-            data-testid="export-note-btn"
-            onClick={() => setShowExport(true)}
-            aria-label="Export note"
-            className="btn-secondary text-sm"
-          >⬇ Export</button>
           <span className="save-status text-xs text-text-muted ml-2" aria-live="polite">
             {saveStatus === 'saving' && '●'}
             {saveStatus === 'saved' && '✓'}
@@ -181,12 +173,6 @@ export function NoteWorkspace({ noteId, noteTitle, noteVersion }: NoteWorkspaceP
           className="fixed bottom-0 inset-x-0 rounded-t-2xl md:relative md:rounded-none md:inset-auto md:w-80"
         />
       )}
-
-      <ExportDialog
-        noteId={noteId}
-        isOpen={showExport}
-        onClose={() => setShowExport(false)}
-      />
 
       <div className="flex-1 overflow-y-auto">
         {items.length === 0 ? (

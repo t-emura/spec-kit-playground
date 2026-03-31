@@ -2,14 +2,12 @@ import type {
   WorkspaceNote,
   OutlineItem,
   ItemMetadata,
-  ExportResult,
   CreateNoteDto,
   UpdateNoteDto,
   CreateItemDto,
   UpdateItemDto,
   MoveItemDto,
   UpsertMetadataDto,
-  ExportNoteDto,
   PaginatedNotes,
   ItemTree,
   SearchResult,
@@ -49,8 +47,6 @@ export const apiClient = {
     delete: (noteId: string) =>
       request<void>(`/v1/notes/${noteId}`, { method: 'DELETE' }),
     items: (noteId: string) => request<ItemTree>(`/v1/notes/${noteId}/items`),
-    export: (noteId: string, dto: ExportNoteDto) =>
-      request<ExportResult>(`/v1/notes/${noteId}/export`, { method: 'POST', body: JSON.stringify(dto) }),
   },
   items: {
     create: (noteId: string, dto: CreateItemDto) =>

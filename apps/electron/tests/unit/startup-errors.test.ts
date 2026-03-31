@@ -10,7 +10,7 @@ vi.mock('fs', async (importOriginal) => {
 });
 
 import { existsSync, accessSync } from 'fs';
-import { checkStaticDir, checkDbWritable } from '../../startup-checks.js';
+import { checkStaticDir, checkNotesDir } from '../../startup-checks.js';
 
 const mockShowErrorBox = vi.fn();
 const mockQuit = vi.fn();
@@ -44,19 +44,19 @@ describe('checkStaticDir', () => {
   });
 });
 
-describe('checkDbWritable', () => {
-  it('returns true when DB dir is writable', () => {
+describe('checkNotesDir', () => {
+  it('returns true when notes dir is writable', () => {
     vi.mocked(accessSync).mockReturnValue(undefined);
-    const result = checkDbWritable('/writable/dir', mockDeps);
+    const result = checkNotesDir('/writable/dir', mockDeps);
     expect(result).toBe(true);
     expect(mockShowErrorBox).not.toHaveBeenCalled();
     expect(mockQuit).not.toHaveBeenCalled();
   });
 
-  it('shows error dialog and quits when DB dir is not writable', () => {
+  it('shows error dialog and quits when notes dir is not writable', () => {
     const err = Object.assign(new Error('EACCES'), { code: 'EACCES' });
     vi.mocked(accessSync).mockImplementation(() => { throw err; });
-    const result = checkDbWritable('/readonly/dir', mockDeps);
+    const result = checkNotesDir('/readonly/dir', mockDeps);
     expect(result).toBe(false);
     expect(mockShowErrorBox).toHaveBeenCalledWith(
       '起動エラー',

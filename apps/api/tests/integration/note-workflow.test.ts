@@ -1,32 +1,21 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as schema from '../../src/db/schema.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { NoteRepository } from '../../src/repositories/note-repository.js';
 import { NoteService } from '../../src/services/note-service.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function createTestDb() {
-  const sqlite = new Database(':memory:');
-  sqlite.pragma('foreign_keys = ON');
-  const migration = readFileSync(join(__dirname, '../../src/db/migrations/0001_initial.sql'), 'utf-8');
-  sqlite.exec(migration);
-  return drizzle(sqlite, { schema });
-}
+let tmpDir: string;
+let noteService: NoteService;
 
 describe('Note Creation to Persistence Workflow', () => {
-  let db: ReturnType<typeof createTestDb>;
-  let noteService: NoteService;
-
   beforeAll(() => {
-    db = createTestDb();
-    const repo = new NoteRepository(db);
+    tmpDir = mkdtempSync(join(tmpdir(), 'note-workflow-'));
+    const repo = new NoteRepository(tmpDir);
     noteService = new NoteService(repo);
   });
+
+  afterAll(() => rmSync(tmpDir, { recursive: true }));
 
   it('creates a note and persists it', async () => {
     const note = await noteService.createNote({ title: 'My First Note' });
@@ -50,11 +39,9 @@ describe('Note Creation to Persistence Workflow', () => {
 
   it('rejects update with stale version (optimistic lock)', async () => {
     const note = await noteService.createNote({ title: 'Concurrent Edit' });
-    // Simulate concurrent update
     await noteService.updateNote(note.id, { title: 'Edit 1', version: 1 });
-    // Now version is 2, but we try to update with version 1 again
     await expect(
-      noteService.updateNote(note.id, { title: 'Edit 2 (stale)', version: 1 })
+      noteService.updateNote(note.id, { title: 'Edit 2 (stale)', version: 1 }),
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 

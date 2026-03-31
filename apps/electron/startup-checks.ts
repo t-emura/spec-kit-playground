@@ -23,16 +23,16 @@ export function checkStaticDir(staticDir: string, deps: StartupDeps): boolean {
   return true;
 }
 
-export function checkDbWritable(dataDir: string, deps: StartupDeps): boolean {
+export function checkNotesDir(notesDir: string, deps: StartupDeps): boolean {
   try {
-    accessSync(dataDir, constants.W_OK);
+    accessSync(notesDir, constants.W_OK);
     return true;
   } catch (err) {
-    console.error('[startup-error] DB dir not writable:', { dataDir, err });
+    console.error('[startup-error] Notes dir not writable:', { notesDir, err });
     if (!skipDialogs) {
       deps.dialog.showErrorBox(
         '起動エラー',
-        `データ保存先への書き込み権限がありません。\nパス: ${dataDir}`
+        `データ保存先への書き込み権限がありません。\nパス: ${notesDir}`
       );
     }
     deps.app.quit();

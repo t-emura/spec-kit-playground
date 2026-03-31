@@ -1,8 +1,9 @@
-import { eq, asc } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { notes } from '../db/schema.js';
-import type { DB } from '../db/client.js';
 import type { WorkspaceNote } from 'shared-types';
+import { readNoteFile, writeNoteFile, listNoteFiles, removeNoteFilesById } from '../storage/file-client.js';
+import { extractNoteIdFromFileName } from '../storage/sanitize.js';
+import type { NoteFile } from '../storage/note-file-schema.js';
+import { basename } from 'node:path';
 
 export type { WorkspaceNote };
 
@@ -19,77 +20,102 @@ export interface UpdateNoteInput {
 }
 
 export class NoteRepository {
-  constructor(private readonly db: DB) {}
+  constructor(private readonly notesDir: string) {}
 
   async findAll(): Promise<WorkspaceNote[]> {
-    const rows = await this.db
-      .select()
-      .from(notes)
-      .where(eq(notes.archived, false))
-      .orderBy(asc(notes.createdAt));
-    return rows.map(toNote);
+    const files = listNoteFiles(this.notesDir);
+    const notes: WorkspaceNote[] = [];
+    for (const filePath of files) {
+      const note = readNoteFile(filePath);
+      if (note) notes.push(toNote(note));
+    }
+    notes.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return notes;
   }
 
   async findById(id: string): Promise<WorkspaceNote | null> {
-    const rows = await this.db.select().from(notes).where(eq(notes.id, id));
-    if (rows.length === 0) return null;
-    return toNote(rows[0]!);
+    const noteFile = this.findNoteFileById(id);
+    return noteFile ? toNote(noteFile) : null;
   }
 
   async create(input: CreateNoteInput): Promise<WorkspaceNote> {
     const now = new Date().toISOString();
     const id = uuidv4();
-    await this.db.insert(notes).values({
+    const noteFile: NoteFile = {
       id,
       title: input.title.trim(),
-      description: input.description,
+      description: input.description ?? null,
       viewMode: 'tree',
       version: 1,
-      archived: false,
       createdAt: now,
       updatedAt: now,
-    });
-    return (await this.findById(id))!;
+      items: [],
+    };
+    writeNoteFile(this.notesDir, noteFile);
+    return toNote(noteFile);
   }
 
   async update(id: string, input: UpdateNoteInput): Promise<WorkspaceNote | null> {
-    const existing = await this.findById(id);
-    if (!existing) return null;
+    const noteFile = this.findNoteFileById(id);
+    if (!noteFile) return null;
 
-    if (existing.version !== input.version) {
+    if (noteFile.version !== input.version) {
       const err = Object.assign(new Error('Version conflict'), { statusCode: 409 });
       throw err;
     }
 
     const now = new Date().toISOString();
-    await this.db
-      .update(notes)
-      .set({
-        title: input.title !== undefined ? input.title.trim() : existing.title,
-        description: input.description !== undefined ? input.description : existing.description,
-        viewMode: input.viewMode ?? existing.viewMode,
-        version: existing.version + 1,
-        updatedAt: now,
-      })
-      .where(eq(notes.id, id));
+    const titleChanged = input.title !== undefined && input.title.trim() !== noteFile.title;
 
-    return this.findById(id);
+    // If title changed, remove old file first
+    if (titleChanged) {
+      removeNoteFilesById(this.notesDir, id);
+    }
+
+    const updated: NoteFile = {
+      ...noteFile,
+      title: input.title !== undefined ? input.title.trim() : noteFile.title,
+      description: input.description !== undefined ? (input.description ?? null) : noteFile.description,
+      viewMode: input.viewMode ?? noteFile.viewMode,
+      version: noteFile.version + 1,
+      updatedAt: now,
+    };
+    writeNoteFile(this.notesDir, updated);
+    return toNote(updated);
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.delete(notes).where(eq(notes.id, id));
+    removeNoteFilesById(this.notesDir, id);
+  }
+
+  /** Read the raw NoteFile for a given note ID (used by item/metadata repos) */
+  findNoteFileById(id: string): NoteFile | null {
+    const files = listNoteFiles(this.notesDir);
+    for (const filePath of files) {
+      const fileId = extractNoteIdFromFileName(basename(filePath));
+      if (fileId === id) {
+        return readNoteFile(filePath);
+      }
+    }
+    return null;
+  }
+
+  /** Write a NoteFile back (used by item/metadata repos) */
+  writeNoteFileBack(noteFile: NoteFile): void {
+    removeNoteFilesById(this.notesDir, noteFile.id);
+    writeNoteFile(this.notesDir, noteFile);
   }
 }
 
-function toNote(row: typeof notes.$inferSelect): WorkspaceNote {
+function toNote(noteFile: NoteFile): WorkspaceNote {
   return {
-    id: row.id,
-    title: row.title,
-    description: row.description ?? undefined,
-    viewMode: row.viewMode,
-    version: row.version,
-    archived: row.archived,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    id: noteFile.id,
+    title: noteFile.title,
+    description: noteFile.description ?? undefined,
+    viewMode: noteFile.viewMode,
+    version: noteFile.version,
+    archived: false,
+    createdAt: noteFile.createdAt,
+    updatedAt: noteFile.updatedAt,
   };
 }

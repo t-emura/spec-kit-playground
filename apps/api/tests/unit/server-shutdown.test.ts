@@ -1,27 +1,24 @@
-import { vi, describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { unlinkSync, existsSync } from 'node:fs';
+import { vi, describe, it, expect, afterAll } from 'vitest';
+import { rmSync } from 'node:fs';
 
-const testDbPath = vi.hoisted(() => {
+const testEnv = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require('node:path');
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const os = require('node:os');
-  const p = path.join(os.tmpdir(), `server-shutdown-test-${process.pid}.db`);
-  process.env['SQLITE_DB_PATH'] = p;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('node:fs');
+  const notesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'server-shutdown-test-'));
+  process.env['NOTES_DIR'] = notesDir;
   process.env['NODE_ENV'] = 'test';
-  return p;
+  return { notesDir };
 });
 
 import { buildServer } from '../../src/server.js';
-import { runMigrations } from '../../src/db/migrate.js';
 
 describe('Server Graceful Shutdown', () => {
-  beforeAll(() => {
-    runMigrations(testDbPath);
-  });
-
   afterAll(() => {
-    if (existsSync(testDbPath)) unlinkSync(testDbPath);
+    rmSync(testEnv.notesDir, { recursive: true, force: true });
   });
 
   it('closes cleanly without throwing', async () => {
@@ -36,7 +33,6 @@ describe('Server Graceful Shutdown', () => {
     await server.ready();
     await server.listen({ port: 0, host: '127.0.0.1' });
     await server.close();
-    // After close, the server should no longer accept inject requests
     await expect(
       server.inject({ method: 'GET', url: '/health' })
     ).rejects.toThrow();

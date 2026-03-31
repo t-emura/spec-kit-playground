@@ -1,7 +1,5 @@
 import { vi, describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { unlinkSync, existsSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { existsSync, rmSync } from 'node:fs';
 
 const testEnv = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -11,34 +9,31 @@ const testEnv = vi.hoisted(() => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require('node:fs');
 
-  const dbPath = path.join(os.tmpdir(), `server-bootstrap-test-${process.pid}.db`);
+  const notesDir = fs.mkdtempSync(path.join(os.tmpdir(), 'notes-test-'));
   const staticDir = fs.mkdtempSync(path.join(os.tmpdir(), 'static-test-'));
   const htmlContent = '<!DOCTYPE html><html><body>Test App</body></html>';
   fs.writeFileSync(path.join(staticDir, 'index.html'), htmlContent);
 
-  process.env['SQLITE_DB_PATH'] = dbPath;
+  process.env['NOTES_DIR'] = notesDir;
   process.env['NODE_ENV'] = 'test';
   process.env['STATIC_DIR'] = staticDir;
 
-  return { dbPath, staticDir, htmlContent };
+  return { notesDir, staticDir, htmlContent };
 });
 
 import { buildServer } from '../../src/server.js';
-import { runMigrations } from '../../src/db/migrate.js';
 import type { FastifyInstance } from 'fastify';
 
 describe('Server Bootstrap', () => {
   let server: FastifyInstance;
 
   beforeAll(async () => {
-    runMigrations(testEnv.dbPath);
     server = buildServer();
     await server.ready();
   });
 
   afterAll(async () => {
     await server.close();
-    if (existsSync(testEnv.dbPath)) unlinkSync(testEnv.dbPath);
   });
 
   it('starts without errors', () => {
@@ -67,7 +62,6 @@ describe('Static File Serving', () => {
   let server: FastifyInstance;
 
   beforeAll(async () => {
-    runMigrations(testEnv.dbPath);
     server = buildServer();
     await server.ready();
   });
@@ -75,6 +69,7 @@ describe('Static File Serving', () => {
   afterAll(async () => {
     await server.close();
     if (existsSync(testEnv.staticDir)) rmSync(testEnv.staticDir, { recursive: true });
+    if (existsSync(testEnv.notesDir)) rmSync(testEnv.notesDir, { recursive: true });
   });
 
   it('serves index.html at GET /', async () => {
@@ -99,9 +94,6 @@ describe('Static File Serving', () => {
 // T019c: EADDRINUSE scenario
 describe('Port conflict (EADDRINUSE)', () => {
   it('throws EADDRINUSE when binding to an already-used port', async () => {
-    const dbPath = join(tmpdir(), `eaddrinuse-test-${process.pid}.db`);
-    runMigrations(dbPath);
-
     const server1 = buildServer();
     await server1.ready();
     await server1.listen({ port: 0, host: '127.0.0.1' });
@@ -112,11 +104,10 @@ describe('Port conflict (EADDRINUSE)', () => {
     await server2.ready();
 
     await expect(
-      server2.listen({ port, host: '127.0.0.1' })
+      server2.listen({ port, host: '127.0.0.1' }),
     ).rejects.toMatchObject({ code: 'EADDRINUSE' });
 
     await server1.close();
     await server2.close().catch(() => {});
-    if (existsSync(dbPath)) unlinkSync(dbPath);
   });
 });

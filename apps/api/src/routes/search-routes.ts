@@ -1,10 +1,12 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { db } from '../db/client.js';
+import { env } from '../config/env.js';
+import { NoteRepository } from '../repositories/note-repository.js';
 import { ItemRepository } from '../repositories/item-repository.js';
 import { SearchService } from '../services/search-service.js';
 
 export async function searchRoutes(server: FastifyInstance) {
-  const itemRepo = new ItemRepository(db);
+  const noteRepo = new NoteRepository(env.NOTES_DIR);
+  const itemRepo = new ItemRepository(env.NOTES_DIR, noteRepo);
   const searchService = new SearchService(itemRepo);
 
   // GET /v1/notes/:noteId/search?q=...

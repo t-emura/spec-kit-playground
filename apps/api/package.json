@@ -10,16 +10,11 @@
     "test:unit": "vitest run --config vitest.config.ts tests/unit",
     "test:integration": "vitest run --config vitest.config.ts tests/integration",
     "test:watch": "vitest --config vitest.config.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@fastify/cors": "^10.1.0",
     "@fastify/sensible": "^6.0.4",
-    "better-sqlite3": "^12.8.0",
-    "drizzle-orm": "^0.36.0",
     "fastify": "^5.8.4",
     "pino": "^9.0.0",
     "uuid": "^9.0.0",
@@ -27,11 +22,9 @@
     "@fastify/static": "^8"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^22.0.0",
     "@types/uuid": "^9.0.0",
     "@vitest/coverage-v8": "^2.1.9",
-    "drizzle-kit": "^0.28.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

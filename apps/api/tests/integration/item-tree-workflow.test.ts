@@ -1,40 +1,29 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as schema from '../../src/db/schema.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { NoteRepository } from '../../src/repositories/note-repository.js';
 import { ItemRepository } from '../../src/repositories/item-repository.js';
 import { NoteService } from '../../src/services/note-service.js';
 import { ItemService } from '../../src/services/item-service.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function createTestDb() {
-  const sqlite = new Database(':memory:');
-  sqlite.pragma('foreign_keys = ON');
-  const migration = readFileSync(join(__dirname, '../../src/db/migrations/0001_initial.sql'), 'utf-8');
-  sqlite.exec(migration);
-  return drizzle(sqlite, { schema });
-}
+let tmpDir: string;
+let noteService: NoteService;
+let itemService: ItemService;
+let noteId: string;
 
 describe('Item Tree Move and Collapse State Persistence', () => {
-  let db: ReturnType<typeof createTestDb>;
-  let noteService: NoteService;
-  let itemService: ItemService;
-  let noteId: string;
-
   beforeEach(async () => {
-    db = createTestDb();
-    const noteRepo = new NoteRepository(db);
-    const itemRepo = new ItemRepository(db);
+    tmpDir = mkdtempSync(join(tmpdir(), 'item-tree-test-'));
+    const noteRepo = new NoteRepository(tmpDir);
+    const itemRepo = new ItemRepository(tmpDir, noteRepo);
     noteService = new NoteService(noteRepo);
     itemService = new ItemService(itemRepo, noteRepo);
     const note = await noteService.createNote({ title: 'Tree Test Note' });
     noteId = note.id;
   });
+
+  afterEach(() => rmSync(tmpDir, { recursive: true }));
 
   it('creates 10 items and persists them', async () => {
     for (let i = 0; i < 10; i++) {
@@ -46,10 +35,9 @@ describe('Item Tree Move and Collapse State Persistence', () => {
 
   it('moves an item within the tree', async () => {
     const a = await itemService.createItem(noteId, { content: 'A', orderIndex: 0, depth: 0 });
-    const _b = await itemService.createItem(noteId, { content: 'B', orderIndex: 1, depth: 0 });
-    const _c = await itemService.createItem(noteId, { content: 'C', orderIndex: 2, depth: 0 });
+    await itemService.createItem(noteId, { content: 'B', orderIndex: 1, depth: 0 });
+    await itemService.createItem(noteId, { content: 'C', orderIndex: 2, depth: 0 });
 
-    // Move A to position 2 (after B and C)
     await itemService.moveItem(a.id, { targetOrderIndex: 2 });
     const items = await itemService.getItemTree(noteId);
     const sorted = items.sort((x, y) => x.orderIndex - y.orderIndex);

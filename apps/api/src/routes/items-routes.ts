@@ -1,12 +1,12 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { db } from '../db/client.js';
+import { env } from '../config/env.js';
 import { NoteRepository } from '../repositories/note-repository.js';
 import { ItemRepository } from '../repositories/item-repository.js';
 import { ItemService } from '../services/item-service.js';
 
 export async function itemsRoutes(server: FastifyInstance) {
-  const noteRepo = new NoteRepository(db);
-  const itemRepo = new ItemRepository(db);
+  const noteRepo = new NoteRepository(env.NOTES_DIR);
+  const itemRepo = new ItemRepository(env.NOTES_DIR, noteRepo);
   const itemService = new ItemService(itemRepo, noteRepo);
 
   // PATCH /v1/items/:itemId

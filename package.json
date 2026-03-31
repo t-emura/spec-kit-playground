@@ -16,18 +16,12 @@
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "lint": "eslint .",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "db:generate": "npm run db:generate --workspace=apps/api",
-    "db:migrate": "npm run db:migrate --workspace=apps/api",
-    "db:seed": "npm run db:seed --workspace=apps/api",
     "secret-scan": "grep -r 'password\\|secret\\|token\\|api_key' apps/ --include='*.ts' -l || echo 'No obvious secrets found'",
-    "build:electron": "tsc -p apps/electron/tsconfig.json && node scripts/build-api-bundle.mjs && node -e \"require('fs').cpSync('apps/api/src/db/migrations','apps/electron/dist/api/src/db/migrations',{recursive:true,force:true})\"",
+    "build:electron": "tsc -p apps/electron/tsconfig.json && node scripts/build-api-bundle.mjs",
     "dev:electron": "ELECTRON=true concurrently \"npm run dev --workspace=apps/api\" \"wait-on http://localhost:8787/health && npm run build:electron && electron .\"",
-    "start": "electron .",
-    "rebuild:native": "electron-rebuild -f -w better-sqlite3"
+    "start": "electron ."
   },
-  "dependencies": {
-    "better-sqlite3": "^12.8.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "esbuild": "^0.25.0",
     "@eslint/js": "^9.39.4",

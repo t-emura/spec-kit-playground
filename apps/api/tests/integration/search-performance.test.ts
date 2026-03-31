@@ -1,39 +1,24 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as schema from '../../src/db/schema.js';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { NoteRepository } from '../../src/repositories/note-repository.js';
 import { ItemRepository } from '../../src/repositories/item-repository.js';
-import { ItemVisualStateRepository } from '../../src/repositories/item-visual-state-repository.js';
 import { NoteService } from '../../src/services/note-service.js';
 import { ItemService } from '../../src/services/item-service.js';
 import { SearchService } from '../../src/services/search-service.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-function createTestDb() {
-  const sqlite = new Database(':memory:');
-  sqlite.pragma('foreign_keys = ON');
-  const migration = readFileSync(join(__dirname, '../../src/db/migrations/0001_initial.sql'), 'utf-8');
-  sqlite.exec(migration);
-  return drizzle(sqlite, { schema });
-}
+let tmpDir: string;
+let noteService: NoteService;
+let itemService: ItemService;
+let searchService: SearchService;
+let noteId: string;
 
 describe('Search Performance with 100+ items', () => {
-  let db: ReturnType<typeof createTestDb>;
-  let noteService: NoteService;
-  let itemService: ItemService;
-  let searchService: SearchService;
-  let noteId: string;
-
   beforeEach(async () => {
-    db = createTestDb();
-    const noteRepo = new NoteRepository(db);
-    const itemRepo = new ItemRepository(db);
-    const _visualStateRepo = new ItemVisualStateRepository(db);
+    tmpDir = mkdtempSync(join(tmpdir(), 'search-perf-'));
+    const noteRepo = new NoteRepository(tmpDir);
+    const itemRepo = new ItemRepository(tmpDir, noteRepo);
     noteService = new NoteService(noteRepo);
     itemService = new ItemService(itemRepo, noteRepo);
     searchService = new SearchService(itemRepo);
@@ -41,7 +26,6 @@ describe('Search Performance with 100+ items', () => {
     const note = await noteService.createNote({ title: 'Large Outline' });
     noteId = note.id;
 
-    // Create 110 items
     for (let i = 0; i < 110; i++) {
       await itemService.createItem(noteId, {
         content: `Item ${i}: ${i % 10 === 0 ? 'special-target' : 'regular content'}`,
@@ -50,6 +34,8 @@ describe('Search Performance with 100+ items', () => {
       });
     }
   });
+
+  afterEach(() => rmSync(tmpDir, { recursive: true }));
 
   it('finds items matching search term in 100+ item outline', async () => {
     const result = await searchService.search(noteId, 'special-target');
@@ -66,7 +52,7 @@ describe('Search Performance with 100+ items', () => {
     const start = Date.now();
     await searchService.search(noteId, 'regular');
     const elapsed = Date.now() - start;
-    expect(elapsed).toBeLessThan(500); // should be well under 500ms
+    expect(elapsed).toBeLessThan(500);
   });
 
   it('search is case-insensitive', async () => {
