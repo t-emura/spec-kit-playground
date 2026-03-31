@@ -120,11 +120,13 @@ export class ItemRepository {
     if (!result) return null;
 
     const { noteFile } = result;
+    // Capture current parent before extraction (item will be removed from tree)
+    const currentParentId = findParentId(noteFile.items, id);
     // Remove item from current position
     const removed = extractItemById(noteFile.items, id);
     if (!removed) return null;
 
-    const targetParentId = input.targetParentId !== undefined ? input.targetParentId : findParentId(noteFile.items, id);
+    const targetParentId = input.targetParentId !== undefined ? input.targetParentId : currentParentId;
 
     // Insert at new position
     if (targetParentId) {
@@ -179,9 +181,9 @@ function findParentId(items: FileItem[], targetId: string): string | null {
   for (const item of items) {
     for (const child of item.children) {
       if (child.id === targetId) return item.id;
-      const found = findParentId(item.children, targetId);
-      if (found !== undefined) return found;
     }
+    const found = findParentId(item.children, targetId);
+    if (found !== null) return found;
   }
   return null;
 }

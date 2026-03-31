@@ -4,54 +4,21 @@
 
 ## Overview
 
-REST API のエンドポイントURLとHTTPメソッドは変更なし。レスポンス形式のみ、アイテム取得がフラット配列からネスト構造に変更される。
+REST API のエンドポイントURLとHTTPメソッドは変更なし。レスポンス形式も変更なし — アイテムは引き続きフラット配列（`parentId` + `depth`）で返される。内部ストレージのみJSONファイルのネスト構造に変更。
 
-## Changed Endpoints
+## Storage Format Change (Internal Only)
 
-### GET /v1/notes/:noteId/items
+アイテムはJSONファイル内ではネスト構造（`children` 配列）で保存されるが、API レスポンスでは従来通りフラット配列に変換して返される。フロントエンド側の変更は不要。
 
-**Before** (flat array):
+### API Response (unchanged):
 ```json
-[
-  { "id": "1", "noteId": "n1", "parentId": null, "orderIndex": 0, "depth": 0, "content": "Parent" },
-  { "id": "2", "noteId": "n1", "parentId": "1", "orderIndex": 0, "depth": 1, "content": "Child" }
-]
+{
+  "items": [
+    { "id": "1", "noteId": "n1", "parentId": null, "orderIndex": 0, "depth": 0, "content": "Parent" },
+    { "id": "2", "noteId": "n1", "parentId": "1", "orderIndex": 0, "depth": 1, "content": "Child" }
+  ]
+}
 ```
-
-**After** (nested tree):
-```json
-[
-  {
-    "id": "1",
-    "noteId": "n1",
-    "orderIndex": 0,
-    "content": "Parent",
-    "status": "active",
-    "highlightLevel": "none",
-    "isCollapsed": false,
-    "createdAt": "...",
-    "updatedAt": "...",
-    "metadata": null,
-    "children": [
-      {
-        "id": "2",
-        "noteId": "n1",
-        "orderIndex": 0,
-        "content": "Child",
-        "status": "active",
-        "highlightLevel": "none",
-        "isCollapsed": false,
-        "createdAt": "...",
-        "updatedAt": "...",
-        "metadata": null,
-        "children": []
-      }
-    ]
-  }
-]
-```
-
-**Breaking change**: `parentId` と `depth` フィールドが削除され、`children` 配列に置き換わる。フロントエンド側の `api-client.ts` とコンポーネントの更新が必要。
 
 ## Unchanged Endpoints
 

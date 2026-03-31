@@ -100,4 +100,24 @@ describe('ItemRepository', () => {
     expect(results).toHaveLength(1);
     expect(results[0]!.content).toBe('Hello world');
   });
+
+  it('finds correct parent when multiple parents have children', async () => {
+    const parent1 = await itemRepo.create(noteId, { content: 'Parent1', orderIndex: 0, depth: 0 });
+    await itemRepo.create(noteId, { content: 'Child1', orderIndex: 0, depth: 1, parentId: parent1.id });
+    const parent2 = await itemRepo.create(noteId, { content: 'Parent2', orderIndex: 1, depth: 0 });
+    const child2 = await itemRepo.create(noteId, { content: 'Child2', orderIndex: 0, depth: 1, parentId: parent2.id });
+    const found = await itemRepo.findById(child2.id);
+    expect(found).not.toBeNull();
+    expect(found!.parentId).toBe(parent2.id);
+  });
+
+  it('move preserves parent when targetParentId is undefined', async () => {
+    const parent = await itemRepo.create(noteId, { content: 'Parent', orderIndex: 0, depth: 0 });
+    const child1 = await itemRepo.create(noteId, { content: 'Child1', orderIndex: 0, depth: 1, parentId: parent.id });
+    await itemRepo.create(noteId, { content: 'Child2', orderIndex: 1, depth: 1, parentId: parent.id });
+    // Move child1 to index 1 without changing parent
+    const moved = await itemRepo.move(child1.id, { targetOrderIndex: 1 });
+    expect(moved).not.toBeNull();
+    expect(moved!.parentId).toBe(parent.id);
+  });
 });
