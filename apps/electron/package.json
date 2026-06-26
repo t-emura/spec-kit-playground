@@ -7,6 +7,6 @@
     "test:unit": "vitest run --config vitest.config.ts tests/unit"
   },
   "devDependencies": {
-    "vitest": "^2"
+    "vitest": "^4"
   }
 }
